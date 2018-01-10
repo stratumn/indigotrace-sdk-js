@@ -15,21 +15,27 @@ export default function Trace(url, pubKey) {
 
   return {
     /**
-     * Get information about the oracle's workflow
-     * @param {string} pubKey - the oracle's public key.
+     * Get information about the oracle's workflow. To prove the oracle identity, a key object should be passed (a signature will be sent in the request)
+     * @param {Key} key - a key object used to sign the payload
+     * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
+     * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
+     * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
      * @returns {Promise} - a promise that resolve with a list of traces
      */
-    getWorkflow(pubKey) {},
+    getWorkflow(key) {},
 
     /**
-     * Get information about a trace
+     * Get information about a trace.  To prove the oracle identity, a key object should be passed.
      * @param {string} traceID - uuid of a trace
-     * @returns {Promise} - a promise that resolve with a list of the trace's steps
+     * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
+     * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
+     * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
+     * @returns {Promise} - a promise that resolve with a list of the trace's events
      */
-    getTrace(traceID) {},
+    getTrace(traceID, key) {},
 
     /**
-     * Creates an payload
+     * Creates a payload
      * @param {object} data - some arbitraty data, can be any JSONifyable object
      * @param {object} [opts] - options
      * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.

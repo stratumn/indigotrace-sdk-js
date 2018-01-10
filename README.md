@@ -5,7 +5,7 @@ This javascript module exposes function to communicate with the Trace API.
 ## Usage
 
 ```javascript
-// Initialise the SDK with the API's URL
+// Initialize the SDK with the API's URL
 trace = Trace("http://indigotrace.com");
 
 
@@ -20,7 +20,7 @@ data = {
 // Since we omit the traceID, it will instanciate a new trace.
 payload = trace.create(data);
 
-// Your key should be retrieved from en environment variable or an other secure store.
+// Your key should be retrieved from an environment variable or an other secure store.
 // If you do not provide the oracle's public key in the key object, it will be derived from its private key
 myKey = {
   type: "ed25519",
