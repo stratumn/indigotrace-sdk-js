@@ -17,14 +17,14 @@ export default function Trace(url, pubKey) {
     /**
      * Get information about the oracle's workflow
      * @param {string} pubKey - the oracle's public key.
-     * @returns {Workflow} - informations about the workflow : a list of traces, a list of participants
+     * @returns {Promise} - a promise that resolve with a list of traces
      */
     getWorkflow(pubKey) {},
 
     /**
      * Get information about a trace
      * @param {string} traceID - uuid of a trace
-     * @returns {[]object} - list of the trace's steps
+     * @returns {Promise} - a promise that resolve with a list of the trace's steps
      */
     getTrace(traceID) {},
 

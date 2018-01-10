@@ -44,7 +44,7 @@ trace.send(payload);
 //       name: "name"
 //     },
 //     refs: ["ref2", "ref2"],
-//     traceID: "example-trace-id"
+//     traceID: "db255d6d-8e7f-45e6-99f8-cf9f1084ba9b"
 //   },
 //   signature: {
 //     type: "ECDSA",
