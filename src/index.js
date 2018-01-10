@@ -32,7 +32,7 @@ export default function Trace(url, pubKey) {
      * Creates an payload
      * @param {object} data - some arbitraty data, can be any JSONifyable object
      * @param {object} [opts] - options
-     * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. It not provided, a new trace will be created.
+     * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
      * @param {[]string} [opts.refs] - list of linkHashes (other identifier ?) to which the payload references to
      * @returns {Payload} - an properly serialized payload ready to be signed
      */
@@ -45,14 +45,14 @@ export default function Trace(url, pubKey) {
      * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
      * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
      * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
-     * @returns {Payload} - a payload with a 'signatures' field
+     * @returns {SignedPayload} - a payload with a 'signatures' field
      */
     sign(payload, key) {},
 
     /**
      * Sends a signed payload to the API
-     * @param {Payload} payload - payload containing data, traceID and signature
-     * @returns {Trace} - an trace SDK
+     * @param {SignedPayload} payload - payload containing data, traceID and signature
+     * @returns {Promise} - a promise that resolve with a trace-ified array of steps on which we can chain calls
      */
     send(payload) {}
   };

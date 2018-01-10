@@ -21,7 +21,7 @@ data = {
 payload = trace.create(data);
 
 // Your key should be retrieved from en environment variable or an other secure store.
-// If you do not provide your public key in the key object, it will be derived from your private key
+// If you do not provide the oracle's public key in the key object, it will be derived from its private key
 myKey = {
   type: "ed25519",
   priv: "myprivatekey"
