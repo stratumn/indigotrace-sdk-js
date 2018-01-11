@@ -1,6 +1,6 @@
 /**
  * Creates an instance of the SDK.
- * @param {string} url - url of the API (eg: http://indigotrace.com)
+ * @param {string} url - url of the API (eg: https://indigotrace.com)
  * @param {Key} key -  a key object to authenticate the user on the trace platform
  * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
  * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
@@ -29,13 +29,13 @@ export default function Trace(url, key) {
     /**
      * Get information about a trace.  To prove the oracle identity, a key object should be passed.
      * @param {string} traceID - uuid of a trace
-     * @returns {Promise} - a promise that resolve with a list of the trace's events
+     * @returns {Promise} - a promise that resolve swith a list of the trace's events
      */
     getTrace(traceID) {},
 
     /**
      * Creates a payload and signs it
-     * @param {object} data - some arbitraty data, can be any JSONifyable object
+     * @param {object} data - some arbitrary data, can be any JSONifyable object
      * @param {object} [opts] - options
      * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
      * @param {[]string} [opts.refs] - list of linkHashes (other identifier ?) to which the payload references to
@@ -46,7 +46,7 @@ export default function Trace(url, key) {
     /**
      * Sends a signed payload to the API
      * @param {SignedPayload} payload - payload containing data, traceID and signature
-     * @returns {Promise} - a promise that resolve with a trace-ified array of events on which we can chain calls
+     * @returns {Promise} - a promise that resolves with a trace-ified array of events on which we can chain calls
      */
     send(payload) {}
   };
