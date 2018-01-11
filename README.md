@@ -5,20 +5,7 @@ This javascript module exposes function to communicate with the Trace API.
 ## Usage
 
 ```javascript
-// Initialize the SDK with the API's URL
-trace = Trace("http://indigotrace.com");
-
-
-// This is an example of data we want to send to Trace
-data = {
-  type: "test",
-  data: "data",
-  name: "name"
-};
-
-// Create a payload containing our data
-// Since we omit the traceID, it will instanciate a new trace.
-payload = trace.create(data);
+import Trace from "trace-sdk-js"
 
 // Your key should be retrieved from an environment variable or an other secure store.
 // If you do not provide the oracle's public key in the key object, it will be derived from its private key
@@ -28,8 +15,20 @@ myKey = {
   pub: "mypublickey"
 };
 
-// Sign the payload using your key
-payload = trace.sign(payload, myKey);
+// Initialize the SDK with the API's URL
+trace = Trace("https://indigotrace.com", myKey);
+
+
+// This is an example of data we want to send to Trace
+data = {
+  type: "test",
+  data: "data",
+  name: "name"
+};
+
+// Create a payload containing our data ans signs it
+// Since we omit the traceID, it will instanciate a new trace.
+payload = trace.create(data);
 
 // Finally, you can send the payload to the trace API.
 // Before sending it, it will ensure that the fields (payload, signature) are present.
