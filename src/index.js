@@ -1,41 +1,40 @@
 /**
  * Creates an instance of the SDK.
  * @param {string} url - url of the API (eg: http://indigotrace.com)
- * @param {string} [pubKey] - optionally, you can specify the public key of your oracle
+ * @param {Key} key -  a key object to authenticate the user on the trace platform
+ * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
+ * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
+ * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
  * @returns {Trace} - an trace SDK
  */
-export default function Trace(url, pubKey) {
-  let workflow;
+export default function Trace(url, key) {
+  // the oracle needs to authenticate on the tracy API by solving a challenge.
+  // The token should be sent int the "Authorization" header alongside sent requests.
+  let APIkey = authenticate(key);
 
-  if (pubKey) {
-    workflow = getWorkflow(pubkey);
-  }
+  // list of traces belonging to the workflow linked to the oracle's public key
+  let traces = getTraces();
 
-  function getWorkflow(pubKey) {}
+  function authenticate() {}
+
+  function getTraces() {}
 
   return {
     /**
-     * Get information about the oracle's workflow. To prove the oracle identity, a key object should be passed (a signature will be sent in the request)
-     * @param {Key} key - a key object used to sign the payload
-     * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
-     * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
-     * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
+     * Get information about the oracle's workflow.
      * @returns {Promise} - a promise that resolve with a list of traces
      */
-    getWorkflow(key) {},
+    getTraces() {},
 
     /**
      * Get information about a trace.  To prove the oracle identity, a key object should be passed.
      * @param {string} traceID - uuid of a trace
-     * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
-     * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
-     * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
      * @returns {Promise} - a promise that resolve with a list of the trace's events
      */
-    getTrace(traceID, key) {},
+    getTrace(traceID) {},
 
     /**
-     * Creates a payload
+     * Creates a payload and signs it
      * @param {object} data - some arbitraty data, can be any JSONifyable object
      * @param {object} [opts] - options
      * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
@@ -43,17 +42,6 @@ export default function Trace(url, pubKey) {
      * @returns {Payload} - an properly serialized payload ready to be signed
      */
     create(data, opts) {},
-
-    /**
-     * Signs a payload
-     * @param {Payload} payload - a payload containing data
-     * @param {Key} key - a key object used to sign the payload
-     * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
-     * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
-     * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
-     * @returns {SignedPayload} - a payload with a 'signatures' field
-     */
-    sign(payload, key) {},
 
     /**
      * Sends a signed payload to the API
