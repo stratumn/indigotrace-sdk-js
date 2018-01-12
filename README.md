@@ -26,7 +26,7 @@ data = {
   name: "name"
 };
 
-// Create a payload containing our data ans signs it
+// Create a payload containing our data and signs it
 // Since we omit the traceID, it will instanciate a new trace.
 payload = trace.create(data);
 

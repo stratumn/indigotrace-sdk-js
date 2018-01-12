@@ -42,7 +42,7 @@ class Trace {
    * @param {object} [opts] - options
    * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
    * @param {[]string} [opts.refs] - list of linkHashes (other identifier ?) to which the payload references to
-   * @returns {Payload} - an properly serialized payload ready to be signed
+   * @returns {Payload} - an properly serialized  and signed payload
    */
   create(data, opts) {}
 
@@ -52,6 +52,13 @@ class Trace {
    * @returns {Promise} - a promise that resolves with a trace-ified array of events on which we can chain calls
    */
   send(payload) {}
+
+  /**
+   * Verifies the signature of a payload
+   * @param {SignedPayload} payload - payload containing data, traceID and signature
+   * @returns {bool} - true if the verification succeeded, false otherwise
+   */
+  verify(payload) {}
 }
 
 exports.default = function test(url, pubKey) {
