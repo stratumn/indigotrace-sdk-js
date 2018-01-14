@@ -37,14 +37,31 @@ class Trace {
   getTrace(traceID) {}
 
   /**
-   * Creates a payload and signs it
+   * Creates a payload
+   * @param {object} data - some arbitrary data, can be any JSONifyable object
+   * @param {object} [opts] - options
+   * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
+   * @param {[]string} [opts.refs] - list of linkHashes to which the payload references to
+   * @returns {Payload} - a serialized payload
+   */
+  create(data, opts) {}
+
+  /**
+   * Signs a payload
+   * @param {Payload} payload - a serialized payload
+   * @returns {SignedPayload} - a signed payload (contains a 'signatures' field)
+   */
+  sign(payload) {}
+
+  /**
+   * Creates a payload ans signs it
    * @param {object} data - some arbitrary data, can be any JSONifyable object
    * @param {object} [opts] - options
    * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
    * @param {[]string} [opts.refs] - list of linkHashes (other identifier ?) to which the payload references to
-   * @returns {Payload} - an properly serialized  and signed payload
+   * @returns {SignedPayload} - a serialized and signed payload
    */
-  create(data, opts) {}
+  createAndSign(data, opts) {}
 
   /**
    * Sends a signed payload to the API

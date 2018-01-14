@@ -26,9 +26,12 @@ data = {
   name: "name"
 };
 
-// Create a payload containing our data and signs it
+// Create a payload containing our data
 // Since we omit the traceID, it will instanciate a new trace.
 payload = trace.create(data);
+
+// Sign the payload before sending it
+signedPayload = trace.sign(payload)
 
 // Finally, you can send the payload to the trace API.
 // Before sending it, it will ensure that the fields (payload, signature) are present.
@@ -45,10 +48,10 @@ trace.send(payload);
 //     refs: ["ref2", "ref2"],
 //     traceID: "db255d6d-8e7f-45e6-99f8-cf9f1084ba9b"
 //   },
-//   signature: {
+//   signatures: [{
 //     type: "ECDSA",
 //     pubKey: "EXAMPLEPUBLICKEY123",
 //     sig: "signedpayload"
-//   }
+//   }]
 // };
 ```
