@@ -1,3 +1,6 @@
+import { getRequest, postRequest } from './request';
+import { ROUTE_SDK_TRACES } from './constants';
+
 function authenticate() {}
 
 function getTraces() {}
@@ -27,14 +30,19 @@ class Trace {
    * Get information about the oracle's workflow.
    * @returns {Promise} - a promise that resolves with a list of traces
    */
-  getTraces() {}
+  getTraces() {
+    return getRequest(ROUTE_SDK_TRACES);
+  }
 
   /**
    * Get information about a trace.  To prove the oracle identity, a key object should be passed.
    * @param {string} traceID - uuid of a trace
    * @returns {Promise} - a promise that resolves with a list of the trace's events
    */
-  getTrace(traceID) {}
+  getTrace(traceID) {
+    const route = `${ROUTE_SDK_TRACES}/${traceID}`;
+    return getRequest(route);
+  }
 
   /**
    * Creates a payload
@@ -68,7 +76,11 @@ class Trace {
    * @param {SignedPayload} payload - payload containing data, traceID and signature
    * @returns {Promise} - a promise that resolves with a trace-ified array of events on which we can chain calls
    */
-  send(payload) {}
+  send(payload) {
+    const { traceID } = payload;
+    const route = traceID ? `${ROUTE_SDK_TRACES}/${traceID}` : ROUTE_SDK_TRACES;
+    return postRequest(route, payload);
+  }
 
   /**
    * Verifies the signature of a payload
@@ -78,6 +90,6 @@ class Trace {
   verify(payload) {}
 }
 
-exports.default = function test(url, pubKey) {
+export default function(url, pubKey) {
   return new Trace(url, pubKey);
-};
+}
