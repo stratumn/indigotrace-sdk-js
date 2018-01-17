@@ -1,11 +1,19 @@
+import validate from './validate';
+import isUUID from "validator/lib/isUUID";
+import secp256k1 from "secp256k1";
+
 import { getRequest, postRequest } from './request';
 import { ROUTE_SDK_TRACES } from './constants';
 
-import validate from './validate';
+const handledKeyFormats = ["ECDSA"];
 
 function authenticate() {}
 
 function getTraces() {}
+
+function isHandledAlg(alg) {
+  return handledKeyFormats.includes(alg);
+}
 
 class Trace {
   /**
@@ -21,9 +29,7 @@ class Trace {
     // the oracle needs to authenticate on the tracy API by solving a challenge.
     // The token should be sent in the "Authorization" header alongside sent requests.
     this.APiKey = authenticate(key);
-
-    this.userKey = key;
-
+    this.key = key;
     // list of traces belonging to the workflow linked to the oracle's public key
     this.traces = getTraces();
   }
@@ -54,14 +60,56 @@ class Trace {
    * @param {[]string} [opts.refs] - list of linkHashes to which the payload references to
    * @returns {Payload} - a serialized payload
    */
-  create(data, opts) {}
+  create(data, opts) {
+    if (!data) {
+      throw new Error("A payload cannot be null");
+    }
+    let obj = {
+      payload: {
+        data: data
+      },
+      signatures: []
+    };
+
+    if (opts) {
+      if (opts.refs && !(opts.refs instanceof Array)) {
+        throw new Error("opts.refs must be an array");
+      } else if (opts.traceID && !isUUID(opts.traceID, 4)) {
+        throw new Error(`opts.traceID must be an UUID, got ${opts.traceID}`);
+      }
+
+      obj.payload = Object.assign(obj.payload, {
+        traceID: opts.traceID,
+        refs: opts.refs
+      });
+    }
+
+    return obj;
+  }
 
   /**
    * Signs a payload
    * @param {Payload} payload - a serialized payload
    * @returns {SignedPayload} - a signed payload (contains a 'signatures' field)
    */
-  sign(payload) {}
+  sign(payload) {
+    if (!this.key || !this.key.pub || !this.key.priv) {
+      throw new Error("A key must be set to sign a payload");
+    } else if (!isHandledAlg(this.key.type)) {
+      throw new Error(`${this.key.type} : Unhandled key type`);
+    } else if (!payload || !payload.payload || !payload.payload.data) {
+      throw new Error("A payload must contains a non-null 'data' field");
+    }
+
+    const bytes = JSONToPaddedBuffer(payload.payload);
+    const signObj = secp256k1.sign(bytes, this.key.priv);
+    payload.signatures.push({
+      type: this.key.type,
+      pubKey: this.key.pub,
+      sig: signObj.signature
+    });
+    return payload;
+  }
 
   /**
    * Creates a payload ans signs it
@@ -71,7 +119,10 @@ class Trace {
    * @param {[]string} [opts.refs] - list of linkHashes (other identifier ?) to which the payload references to
    * @returns {SignedPayload} - a serialized and signed payload
    */
-  createAndSign(data, opts) {}
+  createAndSign(data, opts) {
+    const payload = this.create(data, opts);
+    return this.sign(payload);
+  }
 
   /**
    * Sends a signed payload to the API
