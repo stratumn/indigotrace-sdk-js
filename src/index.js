@@ -1,6 +1,8 @@
 import { getRequest, postRequest } from './request';
 import { ROUTE_SDK_TRACES } from './constants';
 
+import validate from './validate';
+
 function authenticate() {}
 
 function getTraces() {}
@@ -76,10 +78,16 @@ class Trace {
    * @param {SignedPayload} payload - payload containing data, traceID and signature
    * @returns {Promise} - a promise that resolves with a trace-ified array of events on which we can chain calls
    */
-  send(payload) {
-    const { traceID } = payload;
+  send(data) {
+    // check the data is valid before sending it
+    const { valid, error } = validate(data);
+    if (!valid) {
+      throw new Error(`Data is not valid: ${error}`);
+    }
+
+    const { payload: { traceID } } = data;
     const route = traceID ? `${ROUTE_SDK_TRACES}/${traceID}` : ROUTE_SDK_TRACES;
-    return postRequest(route, payload);
+    return postRequest(route, data);
   }
 
   /**
