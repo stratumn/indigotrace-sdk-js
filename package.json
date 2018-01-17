@@ -45,6 +45,9 @@
   },
   "dependencies": {
     "ajv": "^6.0.1",
-    "axios": "^0.17.1"
+    "axios": "^0.17.1",
+    "elliptic": "6.4.0",
+    "canonicaljson": "1.0.0",
+    "validator": "9.2.0"
   }
 }
