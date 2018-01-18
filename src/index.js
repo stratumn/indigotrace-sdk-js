@@ -1,11 +1,12 @@
-import validate from './validate';
-import isUUID from "validator/lib/isUUID";
-import secp256k1 from "secp256k1";
+import isUUID from 'validator/lib/isUUID';
+import { ec as EC } from 'elliptic';
+import { stringify } from 'canonicaljson';
 
 import { getRequest, postRequest } from './request';
 import { ROUTE_SDK_TRACES } from './constants';
+import validate from './validate';
 
-const handledKeyFormats = ["ECDSA"];
+const handledKeyFormats = ['ECDSA'];
 
 function authenticate() {}
 
@@ -19,9 +20,9 @@ class Trace {
   /**
    * Creates an instance of the SDK.
    * @param {string} url - url of the API (eg: https://indigotrace.com)
-   * @param {Key} key -  a key object to authenticate the user on the trace platform
+   * @param {string} key -  a key object to authenticate the user on the trace platform
    * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
-   * @param {string} key.priv - the private key. It is used to derive the public key and to sign the payload.
+   * @param {string} key.priv - the private key. It must be an hex-encoded string representing a BigNumber. It is used to derive the public key and to sign the payload.
    * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
    * @returns {Trace} - an trace SDK
    */
@@ -29,9 +30,18 @@ class Trace {
     // the oracle needs to authenticate on the tracy API by solving a challenge.
     // The token should be sent in the "Authorization" header alongside sent requests.
     this.APiKey = authenticate(key);
-    this.key = key;
     // list of traces belonging to the workflow linked to the oracle's public key
     this.traces = getTraces();
+
+    if (!isHandledAlg(key.type)) {
+      throw new Error(`${key.type} : Unhandled key type`);
+    } else if (!key.priv) {
+      throw new Error("key object must have a 'priv' field");
+    }
+    this.key = {
+      ...key,
+      priv: new EC('p256').keyFromPrivate(key.priv)
+    };
   }
 
   /**
@@ -62,9 +72,9 @@ class Trace {
    */
   create(data, opts) {
     if (!data) {
-      throw new Error("A payload cannot be null");
+      throw new Error('A payload cannot be null');
     }
-    let obj = {
+    const obj = {
       payload: {
         data: data
       },
@@ -73,15 +83,16 @@ class Trace {
 
     if (opts) {
       if (opts.refs && !(opts.refs instanceof Array)) {
-        throw new Error("opts.refs must be an array");
+        throw new Error('opts.refs must be an array');
       } else if (opts.traceID && !isUUID(opts.traceID, 4)) {
         throw new Error(`opts.traceID must be an UUID, got ${opts.traceID}`);
       }
 
-      obj.payload = Object.assign(obj.payload, {
+      obj.payload = {
+        ...obj.payload,
         traceID: opts.traceID,
         refs: opts.refs
-      });
+      };
     }
 
     return obj;
@@ -93,20 +104,17 @@ class Trace {
    * @returns {SignedPayload} - a signed payload (contains a 'signatures' field)
    */
   sign(payload) {
-    if (!this.key || !this.key.pub || !this.key.priv) {
-      throw new Error("A key must be set to sign a payload");
-    } else if (!isHandledAlg(this.key.type)) {
-      throw new Error(`${this.key.type} : Unhandled key type`);
+    if (!this.key) {
+      throw new Error('A key must be set to sign a payload');
     } else if (!payload || !payload.payload || !payload.payload.data) {
       throw new Error("A payload must contains a non-null 'data' field");
     }
-
-    const bytes = JSONToPaddedBuffer(payload.payload);
-    const signObj = secp256k1.sign(bytes, this.key.priv);
+    const bytes = Buffer.from(stringify(payload.payload));
+    const signature = this.key.priv.sign(bytes);
     payload.signatures.push({
       type: this.key.type,
-      pubKey: this.key.pub,
-      sig: signObj.signature
+      pubKey: this.key.priv.getPublic(),
+      sig: Buffer.from(signature.toDER())
     });
     return payload;
   }
@@ -146,7 +154,7 @@ class Trace {
    * @param {SignedPayload} payload - payload containing data, traceID and signature
    * @returns {bool} - true if the verification succeeded, false otherwise
    */
-  verify(payload) {}
+  verify() {}
 }
 
 export default function(url, pubKey) {
