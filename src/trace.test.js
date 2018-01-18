@@ -16,7 +16,7 @@ describe('Trace', () => {
 
   beforeEach(() => {
     const url = 'foo/bar';
-    const key = 'pubKey';
+    const key = { type: 'ECDSA', priv: 'test' };
     sdk = makeSdk(url, key);
     getStub.reset();
     postStub.reset();

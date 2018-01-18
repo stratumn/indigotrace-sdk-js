@@ -5,19 +5,18 @@ This javascript module exposes function to communicate with the Trace API.
 ## Usage
 
 ```javascript
-import Trace from "trace-sdk-js"
+import Trace from "trace-sdk-js";
 
 // Your key should be retrieved from an environment variable or an other secure store.
 // If you do not provide the oracle's public key in the key object, it will be derived from its private key
+// The 'priv' field must be an hex-encoded string.
 myKey = {
-  type: "ed25519",
-  priv: "myprivatekey"
-  pub: "mypublickey"
+  type: "ECDSA",
+  priv: "deadbeef"
 };
 
 // Initialize the SDK with the API's URL
 trace = Trace("https://indigotrace.com", myKey);
-
 
 // This is an example of data we want to send to Trace
 data = {
@@ -31,7 +30,7 @@ data = {
 payload = trace.create(data);
 
 // Sign the payload before sending it
-signedPayload = trace.sign(payload)
+signedPayload = trace.sign(payload);
 
 // Finally, you can send the payload to the trace API.
 // Before sending it, it will ensure that the fields (payload, signature) are present.
