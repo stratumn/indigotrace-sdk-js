@@ -1,9 +1,6 @@
-// import { expect } from 'chai';
-
 import Trace from '../src/';
 
 const mockToDER = jest.fn().mockReturnValue('test');
-const mockVerify = jest.fn().mockReturnValue(true);
 const mockSign = jest.fn().mockReturnValue({
   toDER: mockToDER
 });
@@ -17,7 +14,6 @@ jest.mock('elliptic', () => ({
     keyFromPrivate() {
       return {
         sign: mockSign,
-        verify: mockVerify,
         getPublic: mockGetPublic
       };
     }
@@ -31,7 +27,6 @@ describe('Sign', () => {
 
   beforeEach(() => {
     mockToDER.mockClear();
-    mockVerify.mockClear();
     mockGetPublic.mockClear();
     mockSign.mockClear();
 
@@ -61,6 +56,9 @@ describe('Sign', () => {
     const signedPayload = client.sign(payload);
     expect(signedPayload.signatures.length).toEqual(1);
     expect(mockSign.mock.calls.length).toEqual(1);
+    expect(mockToDER.mock.calls.length).toEqual(1);
+    expect(mockGetPublic.mock.calls.length).toEqual(1);
+    expect(mockEncode.mock.calls.length).toEqual(1);
   });
 
   it('should work when the payload has alredy been signed', () => {
