@@ -166,7 +166,7 @@ class Trace {
     const { payload, signatures } = data;
     const bytes = Buffer.from(stringify(payload));
 
-    let verified = signatures.length > 0;
+    let verified = true;
     signatures.forEach(s => {
       const { type, pubKey, sig } = s;
       if (!isHandledAlg(type)) {

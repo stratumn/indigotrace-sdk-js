@@ -37,11 +37,6 @@ describe('Sign', () => {
     expect(mockValidate.mock.calls.length).toBe(1);
   });
 
-  it('should return false when no signatures', () => {
-    const verified = client.verify({ payload: {}, signatures: [] });
-    expect(verified).toBe(false);
-  });
-
   it('should throw when signature type is not supported', () => {
     const verify = () =>
       client.verify({ payload: {}, signatures: [{ type: 'foo' }] });
