@@ -7,7 +7,10 @@ const mockVerify = jest.fn().mockReturnValue(true);
 const mockSign = jest.fn().mockReturnValue({
   toDER: mockToDER
 });
-const mockGetPublic = jest.fn().mockReturnValue('test');
+const mockEncode = jest.fn().mockReturnValue('hex');
+const mockGetPublic = jest.fn().mockReturnValue({
+  encode: mockEncode
+});
 
 jest.mock('elliptic', () => ({
   ec: class {

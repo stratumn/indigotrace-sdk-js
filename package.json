@@ -2,14 +2,14 @@
   "name": "indigo-trace-sdk",
   "version": "0.0.1",
   "description": "Indigo Trace SDK",
-  "main": "lib/indigo-trace-sdk.js",
-  "module": "lib/indigo-trace-sdk.mjs",
-  "browser": "lib/indigo-trace-sdk.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "jest --watch",
     "test:ci": "jest --coverage",
-    "clean": "rimraf lib coverage",
-    "preversion": "yarn clean && yarn test"
+    "build:lib": "babel src --out-dir lib",
+    "clean": "rimraf lib dist coverage",
+    "preversion": "yarn clean && yarn test",
+    "prepublish": "yarn clean && yarn build:lib"
   },
   "publishConfig": {
     "access": "private"
@@ -27,6 +27,7 @@
   "devDependencies": {
     "babel-core": "^6.5.2",
     "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-es2015": "^6.5.0",
     "babelrc-rollup": "^3.0.0",
     "chai": "^4.1.2",
@@ -46,8 +47,8 @@
   "dependencies": {
     "ajv": "^6.0.1",
     "axios": "^0.17.1",
-    "elliptic": "6.4.0",
     "canonicaljson": "1.0.0",
+    "elliptic": "6.4.0",
     "validator": "9.2.0"
   }
 }

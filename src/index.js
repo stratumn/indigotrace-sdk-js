@@ -113,8 +113,8 @@ class Trace {
     const signature = this.key.priv.sign(bytes);
     payload.signatures.push({
       type: this.key.type,
-      pubKey: this.key.priv.getPublic(),
-      sig: Buffer.from(signature.toDER())
+      pubKey: this.key.priv.getPublic().encode('hex'),
+      sig: signature.toDER('hex')
     });
     return payload;
   }
