@@ -8,6 +8,8 @@ import validate from './validate';
 
 const handledKeyFormats = ['ECDSA'];
 
+const ecP256 = new EC('p256');
+
 function authenticate() {}
 
 function getTraces() {}
@@ -40,7 +42,7 @@ class Trace {
     }
     this.key = {
       ...key,
-      priv: new EC('p256').keyFromPrivate(key.priv)
+      priv: ecP256.keyFromPrivate(key.priv)
     };
   }
 
@@ -154,7 +156,28 @@ class Trace {
    * @param {SignedPayload} payload - payload containing data, traceID and signature
    * @returns {bool} - true if the verification succeeded, false otherwise
    */
-  verify() {}
+  verify(data) {
+    // check the data is valid before verifying it
+    const { valid, error } = validate(data);
+    if (!valid) {
+      throw new Error(`Data is not valid: ${error}`);
+    }
+
+    const { payload, signatures } = data;
+    const bytes = Buffer.from(stringify(payload));
+
+    let verified = true;
+    signatures.forEach(s => {
+      const { type, pubKey, sig } = s;
+      if (!isHandledAlg(type)) {
+        throw new Error(`${type} : Unhandled key type`);
+      }
+      const key = ecP256.keyFromPublic(pubKey);
+      verified = verified && key.verify(bytes, sig);
+    });
+
+    return verified;
+  }
 }
 
 export default function(url, pubKey) {
