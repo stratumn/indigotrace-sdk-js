@@ -1,8 +1,17 @@
-import { expect } from 'chai';
+import nacl from 'tweetnacl';
+import chai, { expect } from 'chai';
+import sinonChai from 'sinon-chai';
+import sinon from 'sinon';
 import Trace from '../src/';
 
+const fromSecretKeyStub = sinon
+  .stub(nacl.sign.keyPair, 'fromSecretKey')
+  .returns({ secretKey: 'test', publicKey: 'test' });
+chai.use(sinonChai);
+
 describe('Create', () => {
-  const client = Trace('test', { type: 'ECDSA', priv: 'test' });
+  const client = Trace('test', { type: 'ED25519', secret: 'test' });
+  expect(fromSecretKeyStub).to.have.been.calledOnce;
 
   it('should throw when data is null', () => {
     const nullDataFn = () => client.create(null);

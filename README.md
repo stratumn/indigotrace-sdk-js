@@ -8,11 +8,12 @@ This javascript module exposes function to communicate with the Trace API.
 import Trace from "trace-sdk-js";
 
 // Your key should be retrieved from an environment variable or an other secure store.
-// If you do not provide the oracle's public key in the key object, it will be derived from its private key
-// The 'priv' field must be an hex-encoded string.
+// The public key will be derived from its private key.
+// The 'secret' field must be an base64-encoded string of 64 bytes.
 myKey = {
-  type: "ECDSA",
-  priv: "deadbeef"
+  type: "ed25519",
+  secret:
+    "VD6zmq068l1EhaWfpRQxnlpTjGbwSN2q2XcgriBmo3Mco+7GK+BPLO49yxuQzbQ1dzd/6B+3YQb2c3BhqEaTsA=="
 };
 
 // Initialize the SDK with the API's URL
@@ -48,7 +49,7 @@ trace.send(payload);
 //     traceID: "db255d6d-8e7f-45e6-99f8-cf9f1084ba9b"
 //   },
 //   signatures: [{
-//     type: "ECDSA",
+//     type: "ed25519",
 //     pubKey: "EXAMPLEPUBLICKEY123",
 //     sig: "signedpayload"
 //   }]
