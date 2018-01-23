@@ -2,16 +2,12 @@ import isUUID from 'validator/lib/isUUID';
 import { sign } from 'tweetnacl';
 import { stringify } from 'canonicaljson';
 
-import { getRequest, postRequest } from './request';
-import { ROUTE_SDK_TRACES } from './constants';
+import request from './request';
+import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH } from './constants';
 import validate from './validate';
 import { encodeB64, decodeB64 } from './utils';
 
 const handledKeyFormats = ['ed25519'];
-
-function authenticate() {}
-
-function getTraces() {}
 
 function isHandledAlg(alg) {
   return handledKeyFormats.includes(alg.toLowerCase());
@@ -20,19 +16,12 @@ function isHandledAlg(alg) {
 class Trace {
   /**
    * Creates an instance of the SDK.
-   * @param {string} url - url of the API (eg: https://indigotrace.com)
    * @param {string} key -  a key object to authenticate the user on the trace platform
    * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
    * @param {string} key.secret - the private key. It must be an base64-encoded string of 64 bytes. It is used to derive the public key and to sign the payload.
    * @returns {Trace} - an trace SDK
    */
-  constructor(url, key) {
-    // the oracle needs to authenticate on the tracy API by solving a challenge.
-    // The token should be sent in the "Authorization" header alongside sent requests.
-    this.APiKey = authenticate(key);
-    // list of traces belonging to the workflow linked to the oracle's public key
-    this.traces = getTraces();
-
+  constructor(key) {
     if (!isHandledAlg(key.type)) {
       throw new Error(`${key.type} : Unhandled key type`);
     } else if (!key.secret) {
@@ -49,11 +38,41 @@ class Trace {
   }
 
   /**
+   * Athenticates with the API and sets the APIKey property to
+   * a promise resolving to the APIKey.
+   */
+  authenticate() {
+    const authReq = {
+      type: this.key.type,
+      public_key: this.key.public64,
+      signature: 'signature'
+    };
+    return request('post', ROUTE_SDK_AUTH, { body: authReq });
+  }
+
+  /**
+   * Makes a request to the api with the APIKey. If the APIKey
+   * is not yet set it will make an athentication call using the
+   * key and set the response to the APIKey before making the
+   * desired api call.
+   * @param {string} method -  http method for the api call
+   * @param {string} route - the route to make the call to
+   * @param {object} [body] - the json body to include in the request
+   * @returns {Promise} - a Promise that resolves to an api call
+   */
+  requestWithAuth(method, route, body = null) {
+    if (!this.APIKey) {
+      this.APIKey = this.authenticate();
+    }
+    return this.APIKey.then(auth => request(method, route, { body, auth }));
+  }
+
+  /**
    * Get information about the oracle's workflow.
    * @returns {Promise} - a promise that resolves with a list of traces
    */
   getTraces() {
-    return getRequest(ROUTE_SDK_TRACES);
+    return this.requestWithAuth('get', ROUTE_SDK_TRACES);
   }
 
   /**
@@ -63,7 +82,7 @@ class Trace {
    */
   getTrace(traceID) {
     const route = `${ROUTE_SDK_TRACES}/${traceID}`;
-    return getRequest(route);
+    return this.requestWithAuth('get', route);
   }
 
   /**
@@ -150,7 +169,7 @@ class Trace {
 
     const { payload: { traceID } } = data;
     const route = traceID ? `${ROUTE_SDK_TRACES}/${traceID}` : ROUTE_SDK_TRACES;
-    return postRequest(route, data);
+    return this.requestWithAuth('post', route, data);
   }
 
   /**
@@ -182,6 +201,6 @@ class Trace {
   }
 }
 
-export default function(url, pubKey) {
-  return new Trace(url, pubKey);
+export default function(key) {
+  return new Trace(key);
 }

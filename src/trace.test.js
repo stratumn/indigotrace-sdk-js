@@ -2,10 +2,11 @@ import nacl from 'tweetnacl';
 import chai, { expect } from 'chai';
 import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
+
 import makeSdk from './';
-import * as request from './request';
-import { ROUTE_SDK_TRACES } from './constants';
+import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH } from './constants';
 import * as validate from './validate';
+import * as request from './request';
 
 const fromSecretKeyStub = sinon
   .stub(nacl.sign.keyPair, 'fromSecretKey')
@@ -14,32 +15,98 @@ chai.use(sinonChai);
 
 describe('Trace', () => {
   let sdk;
-  const getStub = sinon.stub(request, 'getRequest');
-  const postStub = sinon.stub(request, 'postRequest');
+  let requestWithAuthStub;
   const validateStub = sinon.stub(validate, 'default');
+  const requestStub = sinon.stub(request, 'default');
 
   beforeEach(() => {
-    const url = 'foo/bar';
     const key = { type: 'ed25519', secret: 'test' };
     fromSecretKeyStub.resetHistory();
 
-    sdk = makeSdk(url, key);
+    sdk = makeSdk(key);
+    requestWithAuthStub = sinon.stub(sdk, 'requestWithAuth');
     expect(fromSecretKeyStub).to.have.been.calledOnce;
-    getStub.reset();
-    postStub.reset();
-    validateStub.reset();
+    validateStub.resetHistory();
+    requestStub.resetHistory();
+  });
+
+  it('#authenticate() should send a POST request', () => {
+    const expectedRequestArgs = [
+      'post',
+      ROUTE_SDK_AUTH,
+      {
+        body: {
+          type: 'type',
+          public_key: '12345',
+          signature: 'signature'
+        }
+      }
+    ];
+
+    sdk.key.type = 'type';
+    sdk.key.public64 = '12345';
+    sdk.authenticate();
+    expect(requestStub).to.have.been.calledOnce;
+    expect(requestStub).to.have.been.calledWith(...expectedRequestArgs);
+  });
+
+  it('#requestWithAuth() should authenticate when APIKey is falsey', done => {
+    const expectedRequestArgs = [
+      'post',
+      '/route',
+      {
+        body: 'body',
+        auth: 'apikey'
+      }
+    ];
+
+    const authenticateStub = sinon.stub(sdk, 'authenticate').resolves('apikey');
+    requestWithAuthStub.restore();
+    sdk.requestWithAuth('post', '/route', 'body');
+    expect(authenticateStub).to.have.been.calledOnce;
+    requestStub.callsFake(() => {
+      expect(requestStub).to.have.been.calledOnce;
+      expect(requestStub).to.have.been.calledWith(...expectedRequestArgs);
+      done();
+    });
+  });
+
+  it('#requestWithAuth() should not authenticate when APIKey is set', done => {
+    const expectedRequestArgs = [
+      'post',
+      '/route',
+      {
+        body: 'body',
+        auth: 'apikey'
+      }
+    ];
+
+    requestWithAuthStub.restore();
+    sdk.APIKey = Promise.resolve('apikey');
+    sdk.requestWithAuth('post', '/route', 'body');
+    requestStub.callsFake(() => {
+      expect(requestStub).to.have.been.calledOnce;
+      expect(requestStub).to.have.been.calledWith(...expectedRequestArgs);
+      done();
+    });
   });
 
   it('#getTraces() should send a GET request', () => {
     sdk.getTraces();
-    expect(getStub).to.have.been.calledOnce;
-    expect(getStub).to.have.been.calledWith(ROUTE_SDK_TRACES);
+    expect(requestWithAuthStub).to.have.been.calledOnce;
+    expect(requestWithAuthStub).to.have.been.calledWith(
+      'get',
+      ROUTE_SDK_TRACES
+    );
   });
 
   it('#getTrace() should send a GET request', () => {
     sdk.getTrace('foo');
-    expect(getStub).to.have.been.calledOnce;
-    expect(getStub).to.have.been.calledWith(`${ROUTE_SDK_TRACES}/foo`);
+    expect(requestWithAuthStub).to.have.been.calledOnce;
+    expect(requestWithAuthStub).to.have.been.calledWith(
+      'get',
+      `${ROUTE_SDK_TRACES}/foo`
+    );
   });
 
   it('#send() should throw if data is invalid', () => {
@@ -57,8 +124,12 @@ describe('Trace', () => {
     validateStub.returns({ valid: true });
     const data = { payload: { something: 'important' } };
     sdk.send(data);
-    expect(postStub).to.have.been.calledOnce;
-    expect(postStub).to.have.been.calledWith(ROUTE_SDK_TRACES, data);
+    expect(requestWithAuthStub).to.have.been.calledOnce;
+    expect(requestWithAuthStub).to.have.been.calledWith(
+      'post',
+      ROUTE_SDK_TRACES,
+      data
+    );
     expect(validateStub).to.have.been.calledOnce;
   });
 
@@ -66,8 +137,9 @@ describe('Trace', () => {
     validateStub.returns({ valid: true });
     const data = { payload: { something: 'important', traceID: 'foo-bar' } };
     sdk.send(data);
-    expect(postStub).to.have.been.calledOnce;
-    expect(postStub).to.have.been.calledWith(
+    expect(requestWithAuthStub).to.have.been.calledOnce;
+    expect(requestWithAuthStub).to.have.been.calledWith(
+      'post',
       `${ROUTE_SDK_TRACES}/foo-bar`,
       data
     );

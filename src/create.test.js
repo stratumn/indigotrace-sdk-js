@@ -10,7 +10,7 @@ const fromSecretKeyStub = sinon
 chai.use(sinonChai);
 
 describe('Create', () => {
-  const client = Trace('test', { type: 'ED25519', secret: 'test' });
+  const client = Trace({ type: 'ED25519', secret: 'test' });
   expect(fromSecretKeyStub).to.have.been.calledOnce;
 
   it('should throw when data is null', () => {
