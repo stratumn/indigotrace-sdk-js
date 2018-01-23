@@ -1,21 +1,20 @@
 import isUUID from 'validator/lib/isUUID';
-import { ec as EC } from 'elliptic';
+import { sign } from 'tweetnacl';
 import { stringify } from 'canonicaljson';
 
 import { getRequest, postRequest } from './request';
 import { ROUTE_SDK_TRACES } from './constants';
 import validate from './validate';
+import { encodeB64, decodeB64 } from './utils';
 
-const handledKeyFormats = ['ECDSA'];
-
-const ecP256 = new EC('p256');
+const handledKeyFormats = ['ed25519'];
 
 function authenticate() {}
 
 function getTraces() {}
 
 function isHandledAlg(alg) {
-  return handledKeyFormats.includes(alg);
+  return handledKeyFormats.includes(alg.toLowerCase());
 }
 
 class Trace {
@@ -24,8 +23,7 @@ class Trace {
    * @param {string} url - url of the API (eg: https://indigotrace.com)
    * @param {string} key -  a key object to authenticate the user on the trace platform
    * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
-   * @param {string} key.priv - the private key. It must be an hex-encoded string representing a BigNumber. It is used to derive the public key and to sign the payload.
-   * @param {string} [key.pub] - the public key (optional). If provided, the public key will not be derived from the private one.
+   * @param {string} key.secret - the private key. It must be an base64-encoded string of 64 bytes. It is used to derive the public key and to sign the payload.
    * @returns {Trace} - an trace SDK
    */
   constructor(url, key) {
@@ -37,12 +35,16 @@ class Trace {
 
     if (!isHandledAlg(key.type)) {
       throw new Error(`${key.type} : Unhandled key type`);
-    } else if (!key.priv) {
-      throw new Error("key object must have a 'priv' field");
+    } else if (!key.secret) {
+      throw new Error("key object must have a 'secret' field");
     }
+    const keyPair = sign.keyPair.fromSecretKey(decodeB64(key.secret));
     this.key = {
       ...key,
-      priv: ecP256.keyFromPrivate(key.priv)
+      secret: keyPair.secretKey,
+      secret64: key.secret,
+      public: keyPair.publicKey,
+      public64: encodeB64(keyPair.publicKey)
     };
   }
 
@@ -112,11 +114,11 @@ class Trace {
       throw new Error("A payload must contains a non-null 'data' field");
     }
     const bytes = Buffer.from(stringify(payload.payload));
-    const signature = this.key.priv.sign(bytes);
+    const signature = encodeB64(sign(bytes, this.key.secret));
     payload.signatures.push({
       type: this.key.type,
-      pubKey: this.key.priv.getPublic().encode('hex'),
-      sig: signature.toDER('hex')
+      pubKey: this.key.public64,
+      sig: signature
     });
     return payload;
   }
@@ -172,8 +174,8 @@ class Trace {
       if (!isHandledAlg(type)) {
         throw new Error(`${type} : Unhandled key type`);
       }
-      const key = ecP256.keyFromPublic(pubKey);
-      verified = verified && key.verify(bytes, sig);
+      const message = Buffer.from(sign.open(sig, decodeB64(pubKey)) || '');
+      verified = verified && bytes.equals(message);
     });
 
     return verified;

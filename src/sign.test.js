@@ -1,24 +1,15 @@
+import nacl from 'tweetnacl';
+import chai, { expect } from 'chai';
+import sinonChai from 'sinon-chai';
+import sinon from 'sinon';
 import Trace from '../src/';
 
-const mockToDER = jest.fn().mockReturnValue('test');
-const mockSign = jest.fn().mockReturnValue({
-  toDER: mockToDER
-});
-const mockEncode = jest.fn().mockReturnValue('hex');
-const mockGetPublic = jest.fn().mockReturnValue({
-  encode: mockEncode
-});
+chai.use(sinonChai);
 
-jest.mock('elliptic', () => ({
-  ec: class {
-    keyFromPrivate() {
-      return {
-        sign: mockSign,
-        getPublic: mockGetPublic
-      };
-    }
-  }
-}));
+const signStub = sinon.stub(nacl, 'sign').returns(new Uint8Array());
+const fromSecretKeyStub = sinon
+  .stub(nacl.sign.keyPair, 'fromSecretKey')
+  .returns({ secretKey: 'test', publicKey: 'test' });
 
 describe('Sign', () => {
   let client;
@@ -26,46 +17,43 @@ describe('Sign', () => {
   let payload;
 
   beforeEach(() => {
-    mockToDER.mockClear();
-    mockGetPublic.mockClear();
-    mockSign.mockClear();
+    signStub.resetHistory();
+    fromSecretKeyStub.resetHistory();
 
     key = {
-      type: 'ECDSA',
-      priv: 'test'
+      type: 'ed25519',
+      secret: 'test'
     };
 
     client = Trace('test', key);
+    expect(fromSecretKeyStub).to.have.been.calledOnce;
     payload = client.create({ data: 'test' });
   });
 
   it('should throw when no key is set', () => {
     client.key = null;
     const fn = () => client.sign(payload);
-    expect(fn).toThrow('A key must be set to sign a payload');
-    expect(mockSign.mock.calls.length).toBe(0);
+    expect(fn).to.throw('A key must be set to sign a payload');
+    expect(signStub).not.to.have.been.calledOnce;
   });
 
   it('should throw payload is ill-formatted', () => {
     const fn = () => client.sign({});
-    expect(fn).toThrow("A payload must contains a non-null 'data' field");
-    expect(mockSign.mock.calls.length).toBe(0);
+    expect(fn).to.throw("A payload must contains a non-null 'data' field");
+    expect(signStub).not.to.have.been.calledOnce;
   });
 
   it('should add a signature to a payload', () => {
     const signedPayload = client.sign(payload);
-    expect(signedPayload.signatures.length).toEqual(1);
-    expect(mockSign.mock.calls.length).toEqual(1);
-    expect(mockToDER.mock.calls.length).toEqual(1);
-    expect(mockGetPublic.mock.calls.length).toEqual(1);
-    expect(mockEncode.mock.calls.length).toEqual(1);
+    expect(signedPayload.signatures.length).to.equal(1);
+    expect(signStub).to.have.been.calledOnce;
   });
 
   it('should work when the payload has alredy been signed', () => {
     const fn = () => client.sign(payload);
-    expect(fn().signatures.length).toEqual(1);
-    expect(mockSign.mock.calls.length).toEqual(1);
-    expect(fn().signatures.length).toEqual(2);
-    expect(mockSign.mock.calls.length).toEqual(2);
+    expect(fn().signatures.length).to.equal(1);
+    expect(signStub).to.have.been.calledOnce;
+    expect(fn().signatures.length).to.equal(2);
+    expect(signStub).to.have.been.calledTwice;
   });
 });

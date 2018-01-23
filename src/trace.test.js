@@ -1,3 +1,4 @@
+import nacl from 'tweetnacl';
 import chai, { expect } from 'chai';
 import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
@@ -6,6 +7,9 @@ import * as request from './request';
 import { ROUTE_SDK_TRACES } from './constants';
 import * as validate from './validate';
 
+const fromSecretKeyStub = sinon
+  .stub(nacl.sign.keyPair, 'fromSecretKey')
+  .returns({ secretKey: 'test', publicKey: 'test' });
 chai.use(sinonChai);
 
 describe('Trace', () => {
@@ -16,8 +20,11 @@ describe('Trace', () => {
 
   beforeEach(() => {
     const url = 'foo/bar';
-    const key = { type: 'ECDSA', priv: 'test' };
+    const key = { type: 'ed25519', secret: 'test' };
+    fromSecretKeyStub.resetHistory();
+
     sdk = makeSdk(url, key);
+    expect(fromSecretKeyStub).to.have.been.calledOnce;
     getStub.reset();
     postStub.reset();
     validateStub.reset();

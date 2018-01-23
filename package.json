@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest --watch",
     "test:ci": "jest --coverage",
-    "build:lib": "babel src --out-dir lib",
+    "build:lib": "babel src --out-dir lib --ignore '**/*.test.js'",
     "clean": "rimraf lib dist coverage",
     "preversion": "yarn clean && yarn test",
     "prepublish": "yarn clean && yarn build:lib"
@@ -49,7 +49,7 @@
     "ajv": "^6.0.1",
     "axios": "^0.17.1",
     "canonicaljson": "1.0.0",
-    "elliptic": "6.4.0",
+    "tweetnacl": "1.0.0",
     "validator": "9.2.0"
   }
 }
