@@ -25,7 +25,31 @@ describe('#validateSignedPayload()', () => {
 
     result = validateSignedPayload({
       payload: {
-        data: {}
+        data: {},
+        trace_id: ''
+      }
+    });
+    expect(result.valid).to.be.false;
+    expect(result.error).to.be.equal(
+      "data.payload should have required property 'refs'"
+    );
+
+    result = validateSignedPayload({
+      payload: {
+        data: {},
+        refs: null
+      }
+    });
+    expect(result.valid).to.be.false;
+    expect(result.error).to.be.equal(
+      "data.payload should have required property 'trace_id'"
+    );
+
+    result = validateSignedPayload({
+      payload: {
+        data: {},
+        trace_id: '',
+        refs: null
       }
     });
     expect(result.valid).to.be.false;
@@ -35,7 +59,9 @@ describe('#validateSignedPayload()', () => {
 
     result = validateSignedPayload({
       payload: {
-        data: {}
+        data: {},
+        trace_id: '',
+        refs: null
       },
       signatures: []
     });
@@ -46,7 +72,9 @@ describe('#validateSignedPayload()', () => {
 
     result = validateSignedPayload({
       payload: {
-        data: {}
+        data: {},
+        trace_id: '',
+        refs: null
       },
       signatures: [{}]
     });
@@ -57,7 +85,9 @@ describe('#validateSignedPayload()', () => {
 
     result = validateSignedPayload({
       payload: {
-        data: 'a'
+        data: 'a',
+        trace_id: '',
+        refs: null
       }
     });
     expect(result.valid).to.be.false;
@@ -66,27 +96,29 @@ describe('#validateSignedPayload()', () => {
     result = validateSignedPayload({
       payload: {
         data: {},
+        trace_id: '',
         refs: true
       }
     });
     expect(result.valid).to.be.false;
-    expect(result.error).to.be.equal('data.payload.refs should be array');
+    expect(result.error).to.be.equal('data.payload.refs should be array,null');
 
     result = validateSignedPayload({
       payload: {
         data: {},
         refs: [],
-        traceID: 1
+        trace_id: 1
       }
     });
     expect(result.valid).to.be.false;
-    expect(result.error).to.be.equal('data.payload.traceID should be string');
+    expect(result.error).to.be.equal('data.payload.trace_id should be string');
 
     result = validateSignedPayload({
       payload: {
-        data: {}
+        data: {},
+        trace_id: ''
       },
-      signatures: [{ type: '', pubKey: '', sig: '' }],
+      signatures: [{ type: '', public_key: '', signature: '' }],
       test: {}
     });
     expect(result.valid).to.be.false;
@@ -96,9 +128,11 @@ describe('#validateSignedPayload()', () => {
 
     result = validateSignedPayload({
       payload: {
-        data: {}
+        data: {},
+        trace_id: '',
+        refs: null
       },
-      signatures: [{ type: '', pubKey: '', sig: '', test: '' }]
+      signatures: [{ type: '', public_key: '', signature: '', test: '' }]
     });
     expect(result.valid).to.be.false;
     expect(result.error).to.be.equal(
@@ -110,7 +144,7 @@ describe('#validateSignedPayload()', () => {
         data: {},
         test: ''
       },
-      signatures: [{ type: '', pubKey: '', sig: '' }]
+      signatures: [{ type: '', public_key: '', signature: '' }]
     });
     expect(result.valid).to.be.false;
     expect(result.error).to.be.equal(
@@ -123,13 +157,13 @@ describe('#validateSignedPayload()', () => {
       payload: {
         data: {},
         refs: [],
-        traceID: 'abc'
+        trace_id: 'abc'
       },
       signatures: [
         {
           type: 'foo',
-          pubKey: 'bar',
-          sig: 'foo+bar'
+          public_key: 'bar',
+          signature: 'foo+bar'
         }
       ]
     });

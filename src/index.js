@@ -74,7 +74,7 @@ class Trace {
    * @param {[]string} [opts.refs] - list of linkHashes to which the payload references to
    * @returns {Payload} - a serialized payload
    */
-  create(data, opts) {
+  create(data, opts = {}) {
     if (!data) {
       throw new Error('A payload cannot be null');
     }
@@ -94,8 +94,8 @@ class Trace {
 
       obj.payload = {
         ...obj.payload,
-        traceID: opts.traceID,
-        refs: opts.refs
+        trace_id: opts.traceID || '',
+        refs: opts.refs || null
       };
     }
 
@@ -113,12 +113,23 @@ class Trace {
     } else if (!payload || !payload.payload || !payload.payload.data) {
       throw new Error("A payload must contains a non-null 'data' field");
     }
+
+    // serialize payload using canonicaljson
     const bytes = Buffer.from(stringify(payload.payload));
-    const signature = encodeB64(sign(bytes, this.key.secret));
+
+    // sign the message and get the 64 first bytes
+    const signedMessage = Buffer.from(sign(bytes, this.key.secret)).slice(
+      0,
+      sign.signatureLength
+    );
+
+    // encode the signature to base64
+    const signature = encodeB64(signedMessage);
+
     payload.signatures.push({
       type: this.key.type,
-      pubKey: this.key.public64,
-      sig: signature
+      public_key: this.key.public64,
+      signature: signature
     });
     return payload;
   }

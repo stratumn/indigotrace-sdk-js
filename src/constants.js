@@ -1,6 +1,6 @@
 // API constants
 export const API_URL =
-  process.env.INDIGOTRACE_API_URL || 'http://localhost:1337';
+  process.env.INDIGOTRACE_API_URL || 'http://localhost:8080';
 export const API_VERSION = process.env.INDIGOTRACE_API_VERSION || 'v1';
 
 // ROUTE constants
