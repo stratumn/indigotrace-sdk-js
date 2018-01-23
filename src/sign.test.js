@@ -25,7 +25,7 @@ describe('Sign', () => {
       secret: 'test'
     };
 
-    client = Trace('test', key);
+    client = Trace(key);
     expect(fromSecretKeyStub).to.have.been.calledOnce;
     payload = client.create({ data: 'test' });
   });
