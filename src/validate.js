@@ -12,11 +12,11 @@ const schema = {
           type: 'object'
         },
         refs: {
-          type: 'array'
+          type: ['array', 'null']
         },
-        traceID: { type: 'string' }
+        trace_id: { type: 'string' }
       },
-      required: ['data'],
+      required: ['data', 'refs', 'trace_id'],
       additionalProperties: false
     },
     signatures: {
@@ -28,14 +28,14 @@ const schema = {
           type: {
             type: 'string'
           },
-          pubKey: {
+          public_key: {
             type: 'string'
           },
-          sig: {
+          signature: {
             type: 'string'
           }
         },
-        required: ['type', 'pubKey', 'sig'],
+        required: ['type', 'public_key', 'signature'],
         additionalProperties: false
       }
     }

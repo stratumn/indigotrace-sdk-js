@@ -25,7 +25,9 @@ describe('Create', () => {
     };
     const expected = {
       payload: {
-        data: data
+        data: data,
+        trace_id: '',
+        refs: null
       },
       signatures: []
     };
@@ -45,7 +47,7 @@ describe('Create', () => {
     const expected = {
       payload: {
         data: data,
-        traceID: '416ac246-e7ac-49ff-93b4-f7e94d997e6b',
+        trace_id: '416ac246-e7ac-49ff-93b4-f7e94d997e6b',
         refs: ['ref1', 'ref2']
       },
       signatures: []
