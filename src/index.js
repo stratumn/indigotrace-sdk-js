@@ -40,6 +40,7 @@ class Trace {
   /**
    * Athenticates with the API and sets the APIKey property to
    * a promise resolving to the APIKey.
+   * @returns {Promise} - a Promise that resolves to an APIKey
    */
   authenticate() {
     const authReq = {
