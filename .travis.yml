@@ -8,7 +8,4 @@ before_install:
 before_script:
   - yarn global add codecov
 script:
-  - yarn test
-  - yarn lint
-  - codecov
-  - yarn run build:lib
+  - yarn run test:ci && yarn lint && codecov && yarn run build:lib
