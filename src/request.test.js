@@ -43,12 +43,12 @@ describe('request', () => {
   });
 
   it('has sets the Authorization header when called with auth option', done => {
-    request('post', '/route', { body: 'body' }).then(data => {
+    request('post', '/route', { data: 'body' }).then(data => {
       expect(requestStub).to.have.been.calledOnce;
       expect(requestStub).to.have.been.calledWith({
         url: '/route',
         method: 'post',
-        body: 'body',
+        data: 'body',
         headers: {
           'Content-Type': 'application/json'
         }
