@@ -5,16 +5,19 @@ import { API_URL } from './constants';
 axios.defaults.adapter = httpAdapter;
 axios.defaults.baseURL = API_URL;
 
-const request = (method, route, body = null) => {
+const request = (method, route, options) => {
   const config = {
     url: route,
     method,
-    data: body,
     headers: { 'Content-Type': 'application/json' }
   };
+
+  if (options) {
+    if (options.body) config.body = options.body;
+    if (options.auth) config.headers.Authorization = options.auth;
+  }
 
   return axios.request(config).then(({ data }) => data);
 };
 
-export const getRequest = route => request('get', route);
-export const postRequest = (route, body) => request('post', route, body);
+export default request;
