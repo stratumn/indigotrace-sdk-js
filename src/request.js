@@ -13,7 +13,7 @@ const request = (method, route, options) => {
   };
 
   if (options) {
-    if (options.body) config.body = options.body;
+    if (options.data) config.data = options.data;
     if (options.auth) config.headers.Authorization = options.auth;
   }
 

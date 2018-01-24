@@ -48,7 +48,7 @@ class Trace {
       public_key: this.key.public64,
       signature: 'signature'
     };
-    return request('post', ROUTE_SDK_AUTH, { body: authReq });
+    return request('post', ROUTE_SDK_AUTH, { data: authReq });
   }
 
   /**
@@ -58,14 +58,14 @@ class Trace {
    * desired api call.
    * @param {string} method -  http method for the api call
    * @param {string} route - the route to make the call to
-   * @param {object} [body] - the json body to include in the request
+   * @param {object} [data] - the json body to include in the request
    * @returns {Promise} - a Promise that resolves to an api call
    */
-  requestWithAuth(method, route, body = null) {
+  requestWithAuth(method, route, data = null) {
     if (!this.APIKey) {
       this.APIKey = this.authenticate();
     }
-    return this.APIKey.then(auth => request(method, route, { body, auth }));
+    return this.APIKey.then(auth => request(method, route, { data, auth }));
   }
 
   /**

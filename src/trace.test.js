@@ -35,7 +35,7 @@ describe('Trace', () => {
       'post',
       ROUTE_SDK_AUTH,
       {
-        body: {
+        data: {
           type: 'type',
           public_key: '12345',
           signature: 'signature'
@@ -55,7 +55,7 @@ describe('Trace', () => {
       'post',
       '/route',
       {
-        body: 'body',
+        data: 'body',
         auth: 'apikey'
       }
     ];
@@ -76,7 +76,7 @@ describe('Trace', () => {
       'post',
       '/route',
       {
-        body: 'body',
+        data: 'body',
         auth: 'apikey'
       }
     ];
