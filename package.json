@@ -16,9 +16,6 @@
     "preversion": "yarn clean && yarn test",
     "prepublish": "yarn clean && yarn build:lib"
   },
-  "publishConfig": {
-    "access": "private"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/stratumn/indigo-trace-sdk-js.git"
