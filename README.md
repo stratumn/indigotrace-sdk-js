@@ -1,4 +1,4 @@
-# trace-sdk-js
+# IndigoTrace SDK
 
 This javascript module exposes function to communicate with the Indigo Trace API. You will first need to sign up for an account at indigotrace.com. Once you have created an *input*, you will need its private key to interact with the API.
 
