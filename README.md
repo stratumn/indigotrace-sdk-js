@@ -1,6 +1,6 @@
 # IndigoTrace SDK
 
-This javascript module exposes function to communicate with the Indigo Trace API. You will first need to sign up for an account at indigotrace.com. Once you have created an *input*, you will need its private key to interact with the API.
+This javascript module exposes functions to communicate with the Indigo Trace API. You will first need to sign up for an account at indigotrace.com. Once you have created an *input*, you will need its private key to interact with the API.
 
 ## Usage
 
@@ -60,7 +60,7 @@ const signedPayload = sdk.sign(payload);
 // };
 
 // Finally, you can send the payload to the trace API.
-// Before sending it, it will ensure that the fields (payload, signature) are present.
+// Before sending it, it will ensure that the fields (payload, signatures) are present.
 sdk.send(payload).then(rsp => {
   // extract the newly created trace id (if non was provided in the payload)
   // and other relevant information
@@ -110,7 +110,7 @@ sdk.getTraces().then(rsp => {
 
 ## Verify payload signatures
 
-Given a signed payload, it is possible to veify that the signatures are correct and indeed signed the payload data:
+Given a signed payload, it is possible to veify that the signatures are correct:
 ```javascript
 if ( !sdk.verify(signedPayload) ) {
   throw new Error('Cannot verify this signature...');
