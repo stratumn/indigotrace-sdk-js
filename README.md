@@ -5,7 +5,7 @@ This javascript module exposes function to communicate with the Indigo Trace API
 ## Usage
 
 ```javascript
-import TraceSdk from "trace-sdk-js";
+import TraceSdk from "indigotrace-sdk";
 
 // The private key should be retrieved from an environment variable or an other secure store.
 // The public key will be derived from its private key.
