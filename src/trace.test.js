@@ -18,11 +18,10 @@ describe('Trace', () => {
   let requestWithAuthStub;
   const validateStub = sinon.stub(validate, 'default');
   const requestStub = sinon.stub(request, 'default');
+  const key = { type: 'ed25519', secret: 'test' };
 
   beforeEach(() => {
-    const key = { type: 'ed25519', secret: 'test' };
     fromSecretKeyStub.resetHistory();
-
     sdk = makeSdk(key);
     requestWithAuthStub = sinon.stub(sdk, 'requestWithAuth');
     expect(fromSecretKeyStub).to.have.been.calledOnce;
@@ -35,6 +34,7 @@ describe('Trace', () => {
       'post',
       ROUTE_SDK_AUTH,
       {
+        baseURL: null,
         data: {
           type: 'type',
           public_key: '12345',
@@ -45,9 +45,11 @@ describe('Trace', () => {
 
     sdk.key.type = 'type';
     sdk.key.public64 = '12345';
+    requestStub.returns('apiKey');
     sdk.authenticate();
     expect(requestStub).to.have.been.calledOnce;
     expect(requestStub).to.have.been.calledWith(...expectedRequestArgs);
+    expect(sdk.APIKey).to.be.equal('apiKey');
   });
 
   it('#requestWithAuth() should authenticate when APIKey is falsey', done => {
@@ -55,6 +57,7 @@ describe('Trace', () => {
       'post',
       '/route',
       {
+        baseURL: null,
         data: 'body',
         auth: 'apikey'
       }
@@ -76,6 +79,7 @@ describe('Trace', () => {
       'post',
       '/route',
       {
+        baseURL: null,
         data: 'body',
         auth: 'apikey'
       }
@@ -144,5 +148,22 @@ describe('Trace', () => {
       data
     );
     expect(validateStub).to.have.been.calledOnce;
+  });
+
+  it('should pass baseURL to requests', () => {
+    const sdkWithUrl = makeSdk(key, 'foo/bar');
+    expect(sdkWithUrl.APIUrl).to.be.equal('foo/bar');
+    const apiKeyPromise = Promise.resolve('apiKey');
+    requestStub.resolves(apiKeyPromise);
+    sdkWithUrl.requestWithAuth('post', '/route');
+    return apiKeyPromise.then(() => {
+      expect(requestStub).to.have.been.calledTwice;
+      expect(requestStub.getCall(0).args[2].baseURL).to.be.equal('foo/bar');
+      expect(requestStub.getCall(1).args).to.be.deep.equal([
+        'post',
+        '/route',
+        { data: null, auth: 'apiKey', baseURL: 'foo/bar' }
+      ]);
+    });
   });
 });

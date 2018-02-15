@@ -15,6 +15,7 @@ const request = (method, route, options) => {
   if (options) {
     if (options.data) config.data = options.data;
     if (options.auth) config.headers.Authorization = options.auth;
+    if (options.baseURL) config.baseURL = options.baseURL;
   }
 
   return axios.request(config).then(({ data }) => data);

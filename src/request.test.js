@@ -13,7 +13,7 @@ describe('request', () => {
     requestStub.resetHistory();
   });
 
-  it('has correct config', done => {
+  it('has correct config', () =>
     request('post', '/route').then(data => {
       expect(requestStub).to.have.been.calledOnce;
       expect(requestStub).to.have.been.calledWith({
@@ -22,11 +22,9 @@ describe('request', () => {
         headers: { 'Content-Type': 'application/json' }
       });
       expect(data).to.equal('data');
-      done();
-    });
-  });
+    }));
 
-  it('has sets the Authorization header when called with auth option', done => {
+  it('sets the Authorization header when called with auth option', () =>
     request('post', '/route', { auth: 'pass' }).then(data => {
       expect(requestStub).to.have.been.calledOnce;
       expect(requestStub).to.have.been.calledWith({
@@ -38,11 +36,9 @@ describe('request', () => {
         }
       });
       expect(data).to.equal('data');
-      done();
-    });
-  });
+    }));
 
-  it('has sets the Authorization header when called with auth option', done => {
+  it('sets data when called with data option', () =>
     request('post', '/route', { data: 'body' }).then(data => {
       expect(requestStub).to.have.been.calledOnce;
       expect(requestStub).to.have.been.calledWith({
@@ -54,7 +50,18 @@ describe('request', () => {
         }
       });
       expect(data).to.equal('data');
-      done();
-    });
-  });
+    }));
+
+  it('sets data when called with data option', () =>
+    request('get', '/route', { baseURL: 'foo/bar' }).then(() => {
+      expect(requestStub).to.have.been.calledOnce;
+      expect(requestStub).to.have.been.calledWith({
+        baseURL: 'foo/bar',
+        url: '/route',
+        method: 'get',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }));
 });
