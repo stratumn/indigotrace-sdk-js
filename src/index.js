@@ -3,7 +3,7 @@ import { sign } from 'tweetnacl';
 import { stringify } from 'canonicaljson';
 
 import request from './request';
-import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH } from './constants';
+import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH, API_URL } from './constants';
 import validate from './validate';
 import { encodeB64, decodeB64 } from './utils';
 
@@ -22,7 +22,7 @@ class Trace {
    * @param {string} [APIUrl] -  the API base url to use for the requests (defaults to constants.API_URL)
    * @returns {Trace} - an trace SDK
    */
-  constructor(key, APIUrl = null) {
+  constructor(key, APIUrl = API_URL) {
     if (!isHandledAlg(key.type)) {
       throw new Error(`${key.type} : Unhandled key type`);
     } else if (!key.secret) {
@@ -221,6 +221,6 @@ class Trace {
   }
 }
 
-export default function(key, APIUrl = null) {
+export default function(key, APIUrl = API_URL) {
   return new Trace(key, APIUrl);
 }

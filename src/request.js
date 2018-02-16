@@ -1,9 +1,7 @@
 import axios from 'axios';
 import httpAdapter from 'axios/lib/adapters/http';
-import { API_URL } from './constants';
 
 axios.defaults.adapter = httpAdapter;
-axios.defaults.baseURL = API_URL;
 
 const request = (method, route, options) => {
   const config = {

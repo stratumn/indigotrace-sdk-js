@@ -4,7 +4,7 @@ import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
 
 import makeSdk from './';
-import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH } from './constants';
+import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH, API_URL } from './constants';
 import * as validate from './validate';
 import * as request from './request';
 
@@ -34,7 +34,7 @@ describe('Trace', () => {
       'post',
       ROUTE_SDK_AUTH,
       {
-        baseURL: null,
+        baseURL: API_URL,
         data: {
           type: 'type',
           public_key: '12345',
@@ -57,7 +57,7 @@ describe('Trace', () => {
       'post',
       '/route',
       {
-        baseURL: null,
+        baseURL: API_URL,
         data: 'body',
         auth: 'apikey'
       }
@@ -79,7 +79,7 @@ describe('Trace', () => {
       'post',
       '/route',
       {
-        baseURL: null,
+        baseURL: API_URL,
         data: 'body',
         auth: 'apikey'
       }
