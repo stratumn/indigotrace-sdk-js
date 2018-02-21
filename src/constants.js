@@ -2,7 +2,7 @@
 export const API_URL =
   process.env.INDIGOTRACE_API_URL ||
   process.env.REACT_APP_INDIGOTRACE_API_URL ||
-  'https://staging-api.indigotrace.com';
+  'https://api.indigotrace.com';
 export const API_VERSION =
   process.env.INDIGOTRACE_API_VERSION ||
   process.env.REACT_APP_INDIGOTRACE_API_VERSION ||

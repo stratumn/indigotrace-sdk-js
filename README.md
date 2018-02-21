@@ -1,6 +1,6 @@
 # IndigoTrace SDK
 
-This javascript module exposes functions to communicate with the Indigo Trace API. You will first need to sign up for an account at indigotrace.com. Once you have created an *input*, you will need its private key to interact with the API.
+This javascript module exposes functions to communicate with the Indigo Trace API. You will first need to sign up for an account at indigotrace.com. Once you have created an _input_, you will need its private key to interact with the API.
 
 ## Usage
 
@@ -16,8 +16,13 @@ const myKey = {
     "VD6zmq068l1EhaWfpRQxnlpTjGbwSN2q2XcgriBmo3Mco+7GK+BPLO49yxuQzbQ1dzd/6B+3YQb2c3BhqEaTsA=="
 };
 
-// Initialize the SDK with the API's URL.
-const sdk = TraceSdk(myKey);
+// The url of the API
+const url = 'https://api.indigotrace.com';
+
+// Initialize the SDK with the key and optionally the API's URL.
+// If you omit the url, it will default to the production environment
+// https://api.indigotrace.com
+const sdk = TraceSdk(myKey, url);
 
 // This is an example of data we want to send to Indigo Trace.
 const data = {
@@ -76,37 +81,40 @@ sdk.send(payload).then(rsp => {
 Head over to indigotrace.com and have a look at your workflow to see the new event in the traces section. You can inspect the content of the payload from there.
 
 ## Retrieve traces
+
 The SDK can also retrieve existing traces and events:
+
 ```javascript
 // If you know the traceID, you can use it directly to retrive the trace content:
-sdk.getTrace('db255d6d-8e7f-45e6-99f8-cf9f1084ba9b').then(rsp => {
+sdk.getTrace("db255d6d-8e7f-45e6-99f8-cf9f1084ba9b").then(rsp => {
   // Extract the information from the trace.
-  const { trace_id, events} = rsp;
+  const { trace_id, events } = rsp;
   events.forEach(e => {
     const { data, event_id, action, updated_at } = e;
     console.log(data);
-  })
-})
+  });
+});
 
 // If you don't know the trace id you can get all traces at once.
 sdk.getTraces().then(rsp => {
   // Extract the information from the traces.
   const { workflow_id, traces } = rsp;
   traces.forEach(trace => {
-    const { trace_id, events} = trace;
+    const { trace_id, events } = trace;
     events.forEach(e => {
       const { data, event_id, action, updated_at } = e;
       console.log(data);
-    })
-  })
+    });
+  });
 });
 ```
 
 ## Verify payload signatures
 
 Given a signed payload, it is possible to veify that the signatures are correct:
+
 ```javascript
-if ( !sdk.verify(signedPayload) ) {
-  throw new Error('Cannot verify this signature...');
+if (!sdk.verify(signedPayload)) {
+  throw new Error("Cannot verify this signature...");
 }
 ```

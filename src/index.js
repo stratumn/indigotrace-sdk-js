@@ -3,7 +3,7 @@ import { sign } from 'tweetnacl';
 import { stringify } from 'canonicaljson';
 
 import request from './request';
-import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH } from './constants';
+import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH, API_URL } from './constants';
 import validate from './validate';
 import { encodeB64, decodeB64 } from './utils';
 
@@ -19,9 +19,10 @@ class Trace {
    * @param {string} key -  a key object to authenticate the user on the trace platform
    * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
    * @param {string} key.secret - the private key. It must be an base64-encoded string of 64 bytes. It is used to derive the public key and to sign the payload.
+   * @param {string} [APIUrl] -  the API base url to use for the requests (defaults to constants.API_URL)
    * @returns {Trace} - an trace SDK
    */
-  constructor(key) {
+  constructor(key, APIUrl = API_URL) {
     if (!isHandledAlg(key.type)) {
       throw new Error(`${key.type} : Unhandled key type`);
     } else if (!key.secret) {
@@ -35,6 +36,7 @@ class Trace {
       public: keyPair.publicKey,
       public64: encodeB64(keyPair.publicKey)
     };
+    this.APIUrl = APIUrl;
   }
 
   /**
@@ -48,7 +50,11 @@ class Trace {
       public_key: this.key.public64,
       signature: 'signature'
     };
-    return request('post', ROUTE_SDK_AUTH, { data: authReq });
+    this.APIKey = request('post', ROUTE_SDK_AUTH, {
+      data: authReq,
+      baseURL: this.APIUrl
+    });
+    return this.APIKey;
   }
 
   /**
@@ -65,7 +71,9 @@ class Trace {
     if (!this.APIKey) {
       this.APIKey = this.authenticate();
     }
-    return this.APIKey.then(auth => request(method, route, { data, auth }));
+    return this.APIKey.then(auth =>
+      request(method, route, { data, auth, baseURL: this.APIUrl })
+    );
   }
 
   /**
@@ -213,6 +221,6 @@ class Trace {
   }
 }
 
-export default function(key) {
-  return new Trace(key);
+export default function(key, APIUrl = API_URL) {
+  return new Trace(key, APIUrl);
 }

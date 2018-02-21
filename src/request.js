@@ -1,9 +1,7 @@
 import axios from 'axios';
 import httpAdapter from 'axios/lib/adapters/http';
-import { API_URL } from './constants';
 
 axios.defaults.adapter = httpAdapter;
-axios.defaults.baseURL = API_URL;
 
 const request = (method, route, options) => {
   const config = {
@@ -15,6 +13,7 @@ const request = (method, route, options) => {
   if (options) {
     if (options.data) config.data = options.data;
     if (options.auth) config.headers.Authorization = options.auth;
+    if (options.baseURL) config.baseURL = options.baseURL;
   }
 
   return axios.request(config).then(({ data }) => data);
