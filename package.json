@@ -1,12 +1,9 @@
 {
-  "name": "indigotrace-sdk",
-  "version": "0.0.1",
+  "name": "@indigotrace/sdk",
+  "version": "0.0.2",
   "description": "Indigo Trace SDK",
   "main": "lib/index.js",
-  "files": [
-    "src/",
-    "lib/"
-  ],
+  "files": ["src/", "lib/"],
   "scripts": {
     "test": "jest --watch",
     "test:ci": "jest --coverage",
@@ -18,21 +15,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/stratumn/indigo-trace-sdk-js.git"
+    "url": "https://github.com/stratumn/indigotrace-sdk-js.git"
   },
-  "keywords": [
-    "stratumn",
-    "sdk",
-    "blockchain",
-    "client",
-    "trace",
-    "indigo"
-  ],
+  "keywords": ["stratumn", "sdk", "blockchain", "client", "trace", "indigo"],
   "author": "Stratumn Team",
   "bugs": {
-    "url": "https://github.com/stratumn/indigo-trace-sdk-js/issues"
+    "url": "https://github.com/stratumn/indigotrace-sdk-js/issues"
   },
-  "homepage": "https://github.com/stratumn/indigo-trace-sdk-js",
+  "homepage": "https://github.com/stratumn/indigotrace-sdk-js",
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.5.2",
