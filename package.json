@@ -29,6 +29,7 @@
     "indigo"
   ],
   "author": "Stratumn Team",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/stratumn/indigo-trace-sdk-js/issues"
   },
