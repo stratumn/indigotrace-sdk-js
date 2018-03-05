@@ -19,6 +19,7 @@
   },
   "keywords": ["stratumn", "sdk", "blockchain", "client", "trace", "indigo"],
   "author": "Stratumn Team",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/stratumn/indigotrace-sdk-js/issues"
   },
