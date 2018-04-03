@@ -25,7 +25,7 @@ const schema = {
       items: {
         type: 'object',
         properties: {
-          type: {
+          algorithm: {
             type: 'string'
           },
           public_key: {
@@ -35,7 +35,7 @@ const schema = {
             type: 'string'
           }
         },
-        required: ['type', 'public_key', 'signature'],
+        required: ['algorithm', 'public_key', 'signature'],
         additionalProperties: false
       }
     }

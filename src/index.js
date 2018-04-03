@@ -1,60 +1,38 @@
+import fs from 'fs';
 import isUUID from 'validator/lib/isUUID';
-import { sign } from 'tweetnacl';
 import { stringify } from 'canonicaljson';
 
 import request from './request';
-import { ROUTE_SDK_TRACES, ROUTE_SDK_AUTH, API_URL } from './constants';
+import {
+  ROUTE_SDK_TRACES,
+  API_URL,
+  KEY_PATH,
+  RSA_WITH_SHA256
+} from './constants';
 import validate from './validate';
-import { encodeB64, decodeB64 } from './utils';
-
-const handledKeyFormats = ['ed25519'];
-
-function isHandledAlg(alg) {
-  return handledKeyFormats.includes(alg.toLowerCase());
-}
+import { verify as verifyRSA, loadKey } from './rsa';
 
 class Trace {
   /**
    * Creates an instance of the SDK.
-   * @param {string} key -  a key object to authenticate the user on the trace platform
-   * @param {string} key.type - the type of the signature (eg: "ed25519", "ecdsa", "dsa") (case insensitive).
-   * @param {string} key.secret - the private key. It must be an base64-encoded string of 64 bytes. It is used to derive the public key and to sign the payload.
    * @param {string} [APIUrl] -  the API base url to use for the requests (defaults to constants.API_URL)
-   * @returns {Trace} - an trace SDK
+   * @returns {Trace} - a trace SDK
    */
-  constructor(key, APIUrl = API_URL) {
-    if (!isHandledAlg(key.type)) {
-      throw new Error(`${key.type} : Unhandled key type`);
-    } else if (!key.secret) {
-      throw new Error("key object must have a 'secret' field");
-    }
-    const keyPair = sign.keyPair.fromSecretKey(decodeB64(key.secret));
-    this.key = {
-      ...key,
-      secret: keyPair.secretKey,
-      secret64: key.secret,
-      public: keyPair.publicKey,
-      public64: encodeB64(keyPair.publicKey)
-    };
-    this.APIUrl = APIUrl;
-  }
+  constructor(APIUrl = API_URL) {
+    this.key = new Promise(resolve => {
+      loadKey(fs.readFileSync(KEY_PATH, 'utf-8'))
+        .then(key => {
+          const privKey = key;
+          const pubKey = key.public.marshal().toString('base64');
 
-  /**
-   * Athenticates with the API and sets the APIKey property to
-   * a promise resolving to the APIKey.
-   * @returns {Promise} - a Promise that resolves to an APIKey
-   */
-  authenticate() {
-    const authReq = {
-      type: this.key.type,
-      public_key: this.key.public64,
-      signature: 'signature'
-    };
-    this.APIKey = request('post', ROUTE_SDK_AUTH, {
-      data: authReq,
-      baseURL: this.APIUrl
+          resolve({ privKey, pubKey });
+        })
+        .catch(err => {
+          throw new Error(err);
+        });
     });
-    return this.APIKey;
+
+    this.APIUrl = APIUrl;
   }
 
   /**
@@ -67,13 +45,8 @@ class Trace {
    * @param {object} [data] - the json body to include in the request
    * @returns {Promise} - a Promise that resolves to an api call
    */
-  requestWithAuth(method, route, data = null) {
-    if (!this.APIKey) {
-      this.APIKey = this.authenticate();
-    }
-    return this.APIKey.then(auth =>
-      request(method, route, { data, auth, baseURL: this.APIUrl })
-    );
+  requestWithOpts(method, route, data = null) {
+    return request(method, route, { data, baseURL: this.APIUrl });
   }
 
   /**
@@ -81,7 +54,7 @@ class Trace {
    * @returns {Promise} - a promise that resolves with a list of traces
    */
   getTraces() {
-    return this.requestWithAuth('get', ROUTE_SDK_TRACES);
+    return this.requestWithOpts('get', ROUTE_SDK_TRACES);
   }
 
   /**
@@ -91,7 +64,7 @@ class Trace {
    */
   getTrace(traceID) {
     const route = `${ROUTE_SDK_TRACES}/${traceID}`;
-    return this.requestWithAuth('get', route);
+    return this.requestWithOpts('get', route);
   }
 
   /**
@@ -145,25 +118,27 @@ class Trace {
     // serialize payload using canonicaljson
     const bytes = Buffer.from(stringify(payload.payload));
 
-    // sign the message and get the 64 first bytes
-    const signedMessage = Buffer.from(sign(bytes, this.key.secret)).slice(
-      0,
-      sign.signatureLength
-    );
+    return new Promise((resolve, reject) => {
+      this.key.then(k => {
+        k.privKey.sign(bytes, (err, sig) => {
+          if (err !== null) {
+            reject(err);
+          }
 
-    // encode the signature to base64
-    const signature = encodeB64(signedMessage);
+          payload.signatures.push({
+            algorithm: RSA_WITH_SHA256,
+            public_key: k.pubKey,
+            signature: sig.toString('base64')
+          });
 
-    payload.signatures.push({
-      type: this.key.type,
-      public_key: this.key.public64,
-      signature: signature
+          resolve(payload);
+        });
+      });
     });
-    return payload;
   }
 
   /**
-   * Creates a payload ans signs it
+   * Creates a payload and signs it
    * @param {object} data - some arbitrary data, can be any JSONifyable object
    * @param {object} [opts] - options
    * @param {object} [opts.traceID] - uuid of the trace. This corresponds to link.meta.mapId. If not provided, a new trace will be created.
@@ -189,7 +164,7 @@ class Trace {
 
     const { payload: { traceID } } = data;
     const route = traceID ? `${ROUTE_SDK_TRACES}/${traceID}` : ROUTE_SDK_TRACES;
-    return this.requestWithAuth('post', route, data);
+    return this.requestWithOpts('post', route, data);
   }
 
   /**
@@ -205,22 +180,28 @@ class Trace {
     }
 
     const { payload, signatures } = data;
-    const bytes = Buffer.from(stringify(payload));
+    const msgBytes = Buffer.from(stringify(payload));
 
     let verified = true;
     signatures.forEach(s => {
-      const { type, pubKey, sig } = s;
-      if (!isHandledAlg(type)) {
-        throw new Error(`${type} : Unhandled key type`);
+      const { algorithm, public_key: publicKey, signature } = s;
+
+      const pkBytes = Buffer.from(publicKey, 'base64');
+      const sigBytes = Buffer.from(signature, 'base64');
+
+      switch (algorithm) {
+        case RSA_WITH_SHA256:
+          verified = verifyRSA(pkBytes, sigBytes, msgBytes);
+          break;
+        default:
+          throw new Error('unhandled signature algorithm');
       }
-      const message = Buffer.from(sign.open(sig, decodeB64(pubKey)) || '');
-      verified = verified && bytes.equals(message);
     });
 
     return verified;
   }
 }
 
-export default function(key, APIUrl = API_URL) {
-  return new Trace(key, APIUrl);
+export default function(APIUrl = API_URL) {
+  return new Trace(APIUrl);
 }

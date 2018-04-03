@@ -50,6 +50,8 @@
     "axios": "^0.17.1",
     "canonicaljson": "1.0.0",
     "tweetnacl": "1.0.0",
-    "validator": "9.2.0"
+    "validator": "9.2.0",
+    "libp2p-crypto": "stratumn/js-libp2p-crypto#master",
+    "asn1.js": "stratumn/asn1.js#master"
   }
 }
