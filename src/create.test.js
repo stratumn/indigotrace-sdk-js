@@ -11,30 +11,21 @@ const readFileSyncStub = sinon
   .stub(fs, 'readFileSync')
   .returns(Buffer.from('any'));
 
-// const loadKeyStub = sinon.stub(rsa, 'loadKey').returns(
-//   Promise.resolve({
-//     public: {
-//       marshal() {
-//         Buffer.from('publicKey');
-//       }
-//     }
-//   })
-// );
-// const loadKeyStub = sinon.stub(rsa, 'loadKey').resolves({
-//   public: {
-//     marshal() {
-//       Buffer.from('publicKey');
-//     }
-//   }
-// });
+const loadKeyStub = sinon.stub(rsa, 'loadKey').resolves({
+  public: {
+    marshal() {
+      return Buffer.from('publicKey');
+    }
+  }
+});
 
 chai.use(sinonChai);
 
-describe.only('Create', () => {
+describe('Create', () => {
   it.only('test', () => {
     const client = Trace({ keyPath: 'key.pem', crtPath: 'crt.pem' });
     // expect(readFileSyncStub).to.have.been.calledThrice;
-    // expect(loadKeyStub).to.have.been.calledOnce;
+    expect(loadKeyStub).to.have.been.calledTwice();
     expect(true);
   });
 
