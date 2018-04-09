@@ -1,4 +1,5 @@
 import fs from 'fs';
+import https from 'https';
 import isUUID from 'validator/lib/isUUID';
 import { stringify } from 'canonicaljson';
 
@@ -6,11 +7,12 @@ import request from './request';
 import {
   ROUTE_SDK_TRACES,
   API_URL,
+  CRT_PATH,
   KEY_PATH,
   RSA_WITH_SHA256
 } from './constants';
 import validate from './validate';
-import { verify as verifyRSA, loadKey } from './rsa';
+import * as rsa from './rsa';
 
 class Trace {
   /**
@@ -18,12 +20,20 @@ class Trace {
    * @param {string} [APIUrl] -  the API base url to use for the requests (defaults to constants.API_URL)
    * @returns {Trace} - a trace SDK
    */
-  constructor(APIUrl = API_URL) {
+  constructor(args) {
+    const { APIUrl = API_URL, keyPath = KEY_PATH, crtPath = CRT_PATH } = args;
+    if (!keyPath || !crtPath)
+      throw new Error('key and certificate paths are required');
+
     this.key = new Promise(resolve => {
-      loadKey(fs.readFileSync(KEY_PATH, 'utf-8'))
+      rsa
+        .loadKey(fs.readFileSync(keyPath, 'utf-8'))
         .then(key => {
           const privKey = key;
+          console.log(key);
           const pubKey = key.public.marshal().toString('base64');
+
+          console.log(pubKey);
 
           resolve({ privKey, pubKey });
         })
@@ -33,6 +43,13 @@ class Trace {
     });
 
     this.APIUrl = APIUrl;
+
+    this.httpsAgent = new https.Agent({
+      port: 443,
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(crtPath),
+      rejectUnauthorized: false
+    });
   }
 
   /**
@@ -46,7 +63,11 @@ class Trace {
    * @returns {Promise} - a Promise that resolves to an api call
    */
   requestWithOpts(method, route, data = null) {
-    return request(method, route, { data, baseURL: this.APIUrl });
+    return request(method, route, {
+      data,
+      baseURL: this.APIUrl,
+      httpsAgent: this.httpsAgent
+    });
   }
 
   /**
@@ -191,7 +212,7 @@ class Trace {
 
       switch (algorithm) {
         case RSA_WITH_SHA256:
-          verified = verifyRSA(pkBytes, sigBytes, msgBytes);
+          verified = rsa.verify(pkBytes, sigBytes, msgBytes);
           break;
         default:
           throw new Error('unhandled signature algorithm');
