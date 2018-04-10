@@ -24,16 +24,16 @@ describe('request', () => {
       expect(data).to.equal('data');
     }));
 
-  it('sets the Authorization header when called with auth option', () =>
-    request('post', '/route', { auth: 'pass' }).then(data => {
+  it('sets the https agent when called with https agent option', () =>
+    request('post', '/route', { httpsAgent: 'pass' }).then(data => {
       expect(requestStub).to.have.been.calledOnce;
       expect(requestStub).to.have.been.calledWith({
         url: '/route',
         method: 'post',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'pass'
-        }
+          'Content-Type': 'application/json'
+        },
+        httpsAgent: 'pass'
       });
       expect(data).to.equal('data');
     }));

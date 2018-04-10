@@ -1,16 +1,18 @@
-import fs from 'fs';
+import https from 'https';
 import isUUID from 'validator/lib/isUUID';
 import { stringify } from 'canonicaljson';
 
+import { readFileSync } from './utils';
 import request from './request';
 import {
   ROUTE_SDK_TRACES,
   API_URL,
   KEY_PATH,
+  CRT_PATH,
   RSA_WITH_SHA256
 } from './constants';
 import validate from './validate';
-import { verify as verifyRSA, loadKey } from './rsa';
+import * as rsa from './rsa';
 
 class Trace {
   /**
@@ -18,9 +20,12 @@ class Trace {
    * @param {string} [APIUrl] -  the API base url to use for the requests (defaults to constants.API_URL)
    * @returns {Trace} - a trace SDK
    */
-  constructor(APIUrl = API_URL) {
+  constructor(args) {
+    const { APIUrl = API_URL, keyPath = KEY_PATH, crtPath = CRT_PATH } = args;
+
     this.key = new Promise(resolve => {
-      loadKey(fs.readFileSync(KEY_PATH, 'utf-8'))
+      rsa
+        .loadKey(readFileSync(keyPath, 'utf-8'))
         .then(key => {
           const privKey = key;
           const pubKey = key.public.marshal().toString('base64');
@@ -33,6 +38,13 @@ class Trace {
     });
 
     this.APIUrl = APIUrl;
+
+    this.httpsAgent = new https.Agent({
+      port: 443,
+      key: readFileSync(keyPath),
+      cert: readFileSync(crtPath),
+      rejectUnauthorized: false
+    });
   }
 
   /**
@@ -46,7 +58,11 @@ class Trace {
    * @returns {Promise} - a Promise that resolves to an api call
    */
   requestWithOpts(method, route, data = null) {
-    return request(method, route, { data, baseURL: this.APIUrl });
+    return request(method, route, {
+      data,
+      baseURL: this.APIUrl,
+      httpsAgent: this.httpsAgent
+    });
   }
 
   /**
@@ -118,22 +134,9 @@ class Trace {
     // serialize payload using canonicaljson
     const bytes = Buffer.from(stringify(payload.payload));
 
-    return new Promise((resolve, reject) => {
-      this.key.then(k => {
-        k.privKey.sign(bytes, (err, sig) => {
-          if (err !== null) {
-            reject(err);
-          }
-
-          payload.signatures.push({
-            algorithm: RSA_WITH_SHA256,
-            public_key: k.pubKey,
-            signature: sig.toString('base64')
-          });
-
-          resolve(payload);
-        });
-      });
+    return rsa.sign(this.key, bytes).then(p => {
+      payload.signatures.push(p);
+      return payload;
     });
   }
 
@@ -191,7 +194,7 @@ class Trace {
 
       switch (algorithm) {
         case RSA_WITH_SHA256:
-          verified = verifyRSA(pkBytes, sigBytes, msgBytes);
+          verified = rsa.verify(pkBytes, sigBytes, msgBytes);
           break;
         default:
           throw new Error('unhandled signature algorithm');
@@ -202,6 +205,6 @@ class Trace {
   }
 }
 
-export default function(APIUrl = API_URL) {
-  return new Trace(APIUrl);
+export default function(args) {
+  return new Trace(args);
 }

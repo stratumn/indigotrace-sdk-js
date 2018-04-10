@@ -53,5 +53,8 @@
     "validator": "9.2.0",
     "libp2p-crypto": "stratumn/js-libp2p-crypto#master",
     "asn1.js": "stratumn/asn1.js#master"
+  },
+  "jest": {
+    "setupTestFrameworkScriptFile": "<rootDir>src/setupTests.js"
   }
 }

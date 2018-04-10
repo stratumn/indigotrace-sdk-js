@@ -1,18 +1,20 @@
-import nacl from 'tweetnacl';
-import { stringify } from 'canonicaljson';
-import chai, { expect } from 'chai';
-import sinonChai from 'sinon-chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import Trace from '../src/';
 import * as validate from './validate';
+import * as rsa from './rsa';
+import * as utils from './utils';
+import { RSA_WITH_SHA256 } from './constants';
 
-chai.use(sinonChai);
-
-const verifyStub = sinon.stub(nacl.sign, 'open');
-const fromSecretKeyStub = sinon
-  .stub(nacl.sign.keyPair, 'fromSecretKey')
-  .returns({ secretKey: 'test', publicKey: 'test' });
-
+const readFileSyncStub = sinon.stub(utils, 'readFileSync').returns('any');
+const loadKeyStub = sinon.stub(rsa, 'loadKey').resolves({
+  public: {
+    marshal() {
+      return Buffer.from('publicKey');
+    }
+  }
+});
+const verifyStub = sinon.stub(rsa, 'verify').returns(true);
 const validateStub = sinon.stub(validate);
 
 describe('Sign', () => {
@@ -20,17 +22,18 @@ describe('Sign', () => {
   let key;
 
   beforeEach(() => {
-    fromSecretKeyStub.resetHistory();
+    readFileSyncStub.resetHistory();
+    loadKeyStub.resetHistory();
     validateStub.default.reset();
     validateStub.default.returns({ valid: true });
 
     key = {
-      type: 'ed25519',
-      secret: 'test'
+      keyPath: 'key.pem',
+      crtPath: 'crt.pem'
     };
 
     client = Trace(key);
-    expect(fromSecretKeyStub).to.have.been.calledOnce;
+    expect(loadKeyStub).to.have.been.calledOnce;
   });
 
   it('should throw when data has invalid format', () => {
@@ -43,34 +46,52 @@ describe('Sign', () => {
     const verify = () =>
       client.verify({
         payload: { data: {} },
-        signatures: [{ type: 'foo', pubKey: '', sig: '' }]
+        signatures: [{ algorithm: 'foo', public_key: 'bar', signature: 'baz' }]
       });
-    expect(verify).to.throw('foo : Unhandled key type');
+    expect(verify).to.throw('unhandled signature algorithm');
   });
 
   it('should return true when all signatures are verified', () => {
+    verifyStub.returns(true);
+
     const payload = { data: { test: 'test' } };
-    verifyStub.returns(stringify(payload));
     const verified = client.verify({
       payload: payload,
       signatures: [
-        { type: 'ed25519', pubKey: 'fooPubKey', sig: 'fooSig' },
-        { type: 'ed25519', pubKey: 'barPubKey', sig: 'barSig' }
+        {
+          algorithm: RSA_WITH_SHA256,
+          public_key: 'fooPubKey',
+          signature: 'fooSig'
+        },
+        {
+          algorithm: RSA_WITH_SHA256,
+          public_key: 'barPubKey',
+          signature: 'barSig'
+        }
       ]
     });
     expect(verified).to.be.true;
     expect(verifyStub).to.have.been.calledTwice;
-    expect(verifyStub).to.be.calledWith('fooSig');
-    expect(verifyStub).to.be.calledWith('barSig');
+    expect(verifyStub).to.be.calledWith(Buffer.from('fooPubKey', 'base64'));
+    expect(verifyStub).to.be.calledWith(Buffer.from('barPubKey', 'base64'));
   });
 
   it('should return false when one signature is not verified', () => {
-    verifyStub.returns(null);
+    verifyStub.returns(false);
+
     const verified = client.verify({
       payload: {},
       signatures: [
-        { type: 'ed25519', pubKey: 'fooPubKey', sig: 'fooSig' },
-        { type: 'ed25519', pubKey: 'barPubKey', sig: 'barSig' }
+        {
+          algorithm: RSA_WITH_SHA256,
+          public_key: 'fooPubKey',
+          signature: 'fooSig'
+        },
+        {
+          algorithm: RSA_WITH_SHA256,
+          public_key: 'barPubKey',
+          signature: 'barSig'
+        }
       ]
     });
     expect(verified).to.be.false;

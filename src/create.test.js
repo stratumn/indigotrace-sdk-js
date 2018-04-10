@@ -1,17 +1,23 @@
-import nacl from 'tweetnacl';
-import chai, { expect } from 'chai';
-import sinonChai from 'sinon-chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import Trace from '../src/';
+import * as rsa from './rsa';
+import * as utils from './utils';
 
-const fromSecretKeyStub = sinon
-  .stub(nacl.sign.keyPair, 'fromSecretKey')
-  .returns({ secretKey: 'test', publicKey: 'test' });
-chai.use(sinonChai);
+const readFileSyncStub = sinon.stub(utils, 'readFileSync').returns('any');
+const loadKeyStub = sinon.stub(rsa, 'loadKey').resolves({
+  public: {
+    marshal() {
+      return Buffer.from('publicKey');
+    }
+  }
+});
 
 describe('Create', () => {
-  const client = Trace({ type: 'ED25519', secret: 'test' });
-  expect(fromSecretKeyStub).to.have.been.calledOnce;
+  const client = Trace({ keyPath: 'key.pem', crtPath: 'crt.pem' });
+
+  expect(readFileSyncStub).to.have.been.calledThrice;
+  expect(loadKeyStub).to.have.been.calledOnce;
 
   it('should throw when data is null', () => {
     const nullDataFn = () => client.create(null);

@@ -1,32 +1,43 @@
-import nacl from 'tweetnacl';
-import chai, { expect } from 'chai';
-import sinonChai from 'sinon-chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import Trace from '../src/';
+import * as rsa from './rsa';
+import * as utils from './utils';
 
-chai.use(sinonChai);
-
-const signStub = sinon.stub(nacl, 'sign').returns(new Uint8Array());
-const fromSecretKeyStub = sinon
-  .stub(nacl.sign.keyPair, 'fromSecretKey')
-  .returns({ secretKey: 'test', publicKey: 'test' });
+const readFileSyncStub = sinon.stub(utils, 'readFileSync').returns('any');
+const loadKeyStub = sinon.stub(rsa, 'loadKey').resolves({
+  public: {
+    marshal() {
+      return Buffer.from('publicKey');
+    }
+  }
+});
+const signStub = sinon.stub(rsa, 'sign').resolves({
+  algorithm: 't',
+  public_key: 'p',
+  signature: 's'
+});
 
 describe('Sign', () => {
   let client;
-  let key;
+  let args;
   let payload;
 
   beforeEach(() => {
     signStub.resetHistory();
-    fromSecretKeyStub.resetHistory();
+    readFileSyncStub.resetHistory();
+    loadKeyStub.resetHistory();
 
-    key = {
-      type: 'ed25519',
-      secret: 'test'
+    args = {
+      keyPath: 'key.pem',
+      crtPath: 'crt.pem'
     };
 
-    client = Trace(key);
-    expect(fromSecretKeyStub).to.have.been.calledOnce;
+    client = Trace(args);
+
+    expect(readFileSyncStub).to.have.been.calledThrice;
+    expect(loadKeyStub).to.have.been.calledOnce;
+
     payload = client.create({ data: 'test' });
   });
 
@@ -45,15 +56,17 @@ describe('Sign', () => {
 
   it('should add a signature to a payload', () => {
     const signedPayload = client.sign(payload);
-    expect(signedPayload.signatures.length).to.equal(1);
-    expect(signStub).to.have.been.calledOnce;
+    return signedPayload.then(p => {
+      expect(p.signatures).to.have.lengthOf(1);
+    });
   });
 
   it('should work when the payload has alredy been signed', () => {
-    const fn = () => client.sign(payload);
-    expect(fn().signatures.length).to.equal(1);
-    expect(signStub).to.have.been.calledOnce;
-    expect(fn().signatures.length).to.equal(2);
-    expect(signStub).to.have.been.calledTwice;
+    const signedPayload = client.sign(payload);
+    return signedPayload.then(p => {
+      client.sign(p).then(p2 => {
+        expect(p2.signatures).to.have.lengthOf(2);
+      });
+    });
   });
 });

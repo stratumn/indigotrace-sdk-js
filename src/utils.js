@@ -1,4 +1,5 @@
 import { define } from 'asn1.js';
+import { readFileSync } from 'fs';
 
 function encodeB64(data) {
   return Buffer.from(data).toString('base64');
@@ -38,4 +39,10 @@ const AlgorithmIdentifierEncoder = define(
   Asn1AlgorithmIdentifier
 );
 
-export { encodeB64, decodeB64, decodePEM, AlgorithmIdentifierEncoder };
+export {
+  encodeB64,
+  decodeB64,
+  decodePEM,
+  AlgorithmIdentifierEncoder,
+  readFileSync
+};

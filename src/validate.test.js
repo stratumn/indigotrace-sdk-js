@@ -80,7 +80,7 @@ describe('#validateSignedPayload()', () => {
     });
     expect(result.valid).to.be.false;
     expect(result.error).to.be.equal(
-      "data.signatures[0] should have required property 'type'"
+      "data.signatures[0] should have required property 'algorithm'"
     );
 
     result = validateSignedPayload({
@@ -118,7 +118,7 @@ describe('#validateSignedPayload()', () => {
         data: {},
         trace_id: ''
       },
-      signatures: [{ type: '', public_key: '', signature: '' }],
+      signatures: [{ algorithm: '', public_key: '', signature: '' }],
       test: {}
     });
     expect(result.valid).to.be.false;
@@ -132,7 +132,7 @@ describe('#validateSignedPayload()', () => {
         trace_id: '',
         refs: null
       },
-      signatures: [{ type: '', public_key: '', signature: '', test: '' }]
+      signatures: [{ algorithm: '', public_key: '', signature: '', test: '' }]
     });
     expect(result.valid).to.be.false;
     expect(result.error).to.be.equal(
@@ -144,7 +144,7 @@ describe('#validateSignedPayload()', () => {
         data: {},
         test: ''
       },
-      signatures: [{ type: '', public_key: '', signature: '' }]
+      signatures: [{ algorithm: '', public_key: '', signature: '' }]
     });
     expect(result.valid).to.be.false;
     expect(result.error).to.be.equal(
@@ -161,7 +161,7 @@ describe('#validateSignedPayload()', () => {
       },
       signatures: [
         {
-          type: 'foo',
+          algorithm: 'foo',
           public_key: 'bar',
           signature: 'foo+bar'
         }
